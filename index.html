@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ourh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#fff;--surface2:#f2f1ee;--surface3:#e8e7e3;
+  --border:#dddbd6;--text:#1a1916;--muted:#8a8680;
+  --accent:#9a6c2e;--accent2:#5a4faa;--red:#c0392b;--green:#2e7d52;--orange:#c96a1a;
+  --warmup:#2980B9;--midset:#C9A800;--peak:#C0392B;--afterhours:#7D3C98;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:14px}
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* HEADER */
+.header{padding:0.65rem 1.3rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--surface);flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.logo h1{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--accent);line-height:1;letter-spacing:-0.02em}
+.logo p{font-size:0.62rem;color:var(--muted);margin-top:0.08rem}
+.hdr-right{display:flex;align-items:center;gap:0.6rem;font-size:0.62rem}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+.dot.orange{background:var(--orange)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.prog-bar{height:2px;background:var(--border);flex-shrink:0}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 0.4s;width:0%}
+/* LAYOUT */
+.main{display:grid;grid-template-columns:1fr 460px;flex:1;overflow:hidden;min-height:0}
+.left-panel{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.right-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+/* PANEL HEADS */
+.ph{padding:0.55rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;gap:0.5rem}
+.ptitle{font-size:0.58rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.badge{background:var(--surface2);color:var(--accent);font-size:0.6rem;padding:0.1rem 0.5rem;border-radius:20px;border:1px solid var(--border);font-weight:600}
+/* ENGINE BAR */
+.engine-bar{padding:0.45rem 1.1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;display:flex;gap:0.45rem}
+.engine-btn{flex:1;display:flex;align-items:center;gap:0.45rem;padding:0.45rem 0.7rem;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.14s;font-family:inherit}
+.engine-btn:hover{border-color:var(--accent);background:#faf6ee}
+.eb-icon{font-size:0.95rem;flex-shrink:0}
+.eb-title{font-size:0.63rem;font-weight:700;color:var(--accent);display:block}
+.eb-sub{font-size:0.54rem;color:var(--muted);display:block;margin-top:0.05rem}
+/* SEARCH */
+.search-wrap{padding:0.5rem 1.1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+#search-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.42rem 0.75rem 0.42rem 2rem;font-family:inherit;font-size:0.7rem;border-radius:6px;outline:none;transition:border-color 0.16s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%238a8680' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:0.55rem center}
+#search-input:focus{border-color:var(--accent);background:#fff}
+.search-hint{font-size:0.56rem;color:var(--muted);margin-top:0.18rem}
+/* TAG CLOUD */
+.tagcloud-bar{padding:0 1.1rem;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;min-height:32px;gap:0.5rem}
+.tagcloud-bar:hover{background:var(--surface2)}
+.tagcloud-bar-left{display:flex;align-items:center;gap:0.4rem;flex:1;min-width:0;overflow:hidden}
+.tagcloud-bar-title{font-size:0.5rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.tagcloud-bar-pills{display:flex;gap:0.15rem;overflow:hidden;min-width:0;align-items:center}
+.tagcloud-bar-pill{font-size:0.48rem;font-weight:700;color:#fff;padding:0.04rem 0.3rem;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.tagcloud-toggle{font-size:0.58rem;color:var(--muted);flex-shrink:0;transition:transform 0.2s;padding:0 0.1rem}
+.tagcloud-toggle.open{transform:rotate(180deg)}
+.tagcloud-body{background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;max-height:0;opacity:0;transition:max-height 0.25s ease,opacity 0.2s}
+.tagcloud-body.open{max-height:270px;opacity:1;overflow-y:auto}
+.tagcloud-body::-webkit-scrollbar{width:3px}
+.tagcloud-body::-webkit-scrollbar-thumb{background:var(--border)}
+.tagcloud-inner{padding:0.35rem 1.1rem 0.5rem}
+.tc-section{padding-top:0.4rem}
+.tc-lbl{font-size:0.5rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.18rem;display:flex;align-items:center;justify-content:space-between}
+.tc-clear{font-size:0.5rem;font-weight:600;cursor:pointer;color:var(--muted);text-transform:none;letter-spacing:0;padding:0.05rem 0.3rem;border-radius:3px;border:1px solid transparent;transition:all 0.12s}
+.tc-clear:hover{border-color:var(--border);color:var(--text)}
+.tc-clear.active{color:var(--accent);opacity:1}
+.tc-chips{display:flex;flex-wrap:wrap;gap:0.15rem}
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:0.15rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;padding:0.12rem 0.48rem;font-size:0.58rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.12s;user-select:none;white-space:nowrap;font-family:inherit}
+.chip:hover{border-color:var(--muted);color:var(--text)}
+.chip.on-role-warmup{background:var(--warmup);border-color:var(--warmup);color:#fff;font-weight:700}
+.chip.on-role-midset{background:var(--midset);border-color:var(--midset);color:#fff;font-weight:700}
+.chip.on-role-peak{background:var(--peak);border-color:var(--peak);color:#fff;font-weight:700}
+.chip.on-role-afterhours{background:var(--afterhours);border-color:var(--afterhours);color:#fff;font-weight:700}
+.chip.on-genre{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.chip.on-style{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:700}
+.chip.on-decade{background:#2c7c5a;border-color:#2c7c5a;color:#fff;font-weight:700}
+.chip.on-all{background:var(--surface3);border-color:var(--muted);color:var(--text);font-weight:700}
+/* SCROLL */
+.scroll{overflow-y:auto;flex:1;min-height:0}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* TRACK LIST */
+.tl-group{border-bottom:1px solid var(--border)}
+.tl-rhead{padding:0.32rem 1.1rem 0.28rem;display:flex;align-items:center;gap:0.5rem;background:var(--surface2);border-bottom:1px solid var(--border)}
+.tl-rthumb{width:30px;height:30px;border-radius:3px;background:var(--surface3);overflow:hidden;flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.85rem}
+.tl-rthumb img{width:100%;height:100%;object-fit:cover}
+.tl-rname{font-family:'DM Serif Display',serif;font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.tl-rmeta{font-size:0.52rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.03rem}
+/* TRACK ROW */
+.tr{display:flex;align-items:center;padding:0.26rem 1.1rem 0.26rem 0;border-bottom:1px solid var(--border);background:var(--surface)}
+.tr:last-child{border-bottom:none}
+.tr-stripe{width:4px;min-height:36px;flex-shrink:0;border-radius:0 2px 2px 0;margin-right:0.5rem}
+.tr-pos{min-width:28px;font-size:0.6rem;font-weight:800;color:var(--accent2);text-align:center;flex-shrink:0;letter-spacing:0.02em}
+.tr-body{flex:1;min-width:0;padding-right:0.4rem}
+.tr-title{font-size:0.7rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-meta{font-size:0.52rem;color:var(--muted);margin-top:0.1rem;display:flex;flex-wrap:wrap;gap:0.18rem;align-items:center}
+.role-pill{font-size:0.48rem;font-weight:700;color:#fff;padding:0.03rem 0.28rem;border-radius:10px;white-space:nowrap}
+.tag-chip{font-size:0.5rem;padding:0.03rem 0.28rem;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-weight:600;white-space:nowrap}
+.tag-chip.bpm{color:var(--accent);border-color:rgba(154,108,46,0.3);background:#fdf8f0}
+.tag-chip.key{color:var(--accent2);border-color:rgba(90,79,170,0.3);background:#f5f4ff}
+.tag-chip.enr{font-size:0.4rem;opacity:0.55}
+/* Role override micro-buttons */
+.tr-roles{display:flex;gap:0.12rem;margin-top:0.16rem;flex-wrap:wrap}
+.rbtn{font-size:0.46rem;padding:0.04rem 0.28rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;color:var(--muted);font-family:inherit;transition:all 0.11s;line-height:1.4}
+.rbtn:hover{border-color:var(--muted)}
+.rbtn.act-warmup{background:var(--warmup);border-color:var(--warmup);color:#fff}
+.rbtn.act-midset{background:var(--midset);border-color:var(--midset);color:#fff}
+.rbtn.act-peak{background:var(--peak);border-color:var(--peak);color:#fff}
+.rbtn.act-afterhours{background:var(--afterhours);border-color:var(--afterhours);color:#fff}
+.tr-addbtn{background:none;border:1px solid var(--border);color:var(--muted);padding:0.18rem 0.44rem;font-size:0.56rem;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600;flex-shrink:0;white-space:nowrap;transition:all 0.12s}
+.tr-addbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tr-addbtn.in{background:var(--accent);border-color:var(--accent);color:#fff}
+.tr-addbtn.in:hover{background:#7a5520}
+/* PAGER */
+.pager{display:flex;align-items:center;justify-content:center;gap:0.7rem;padding:0.6rem;border-top:1px solid var(--border);font-size:0.6rem;color:var(--muted);flex-shrink:0}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.tab{flex:1;padding:0.5rem 0.3rem;font-size:0.58rem;font-weight:600;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;transition:all 0.12s;font-family:inherit;white-space:nowrap}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+/* SET PANEL HEAD */
+.set-ph{padding:0.5rem 0.9rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:0.4rem;flex-shrink:0}
+.set-engine-btn{display:flex;align-items:center;gap:0.25rem;padding:0.26rem 0.58rem;border-radius:4px;border:1px solid rgba(90,79,170,0.35);background:var(--surface2);cursor:pointer;font-family:inherit;font-size:0.58rem;color:var(--accent2);font-weight:600;transition:all 0.12s}
+.set-engine-btn:hover{border-color:var(--accent2);background:#f5f4ff}
+/* SET LIST */
+.set-list{padding:0.45rem 0.65rem;display:flex;flex-direction:column}
+.bridge{font-size:0.52rem;display:flex;align-items:center;gap:0.25rem;justify-content:center;padding:0.04rem 0;color:var(--muted);margin-bottom:0.08rem}
+.bridge::before,.bridge::after{content:'';height:1px;background:var(--border);flex:1}
+.bridge.ok{color:var(--green)}
+.bridge.warn{color:var(--red)}
+/* Pitch drift */
+.pdrift-warn{font-size:0.48rem;font-weight:700;color:var(--red);background:#fff0ee;border:1px solid rgba(192,57,43,0.2);border-radius:3px;padding:0.02rem 0.24rem}
+.pdrift-ok{font-size:0.48rem;color:var(--muted)}
+/* SET ITEM */
+.si{display:flex;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:0.2rem;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:box-shadow 0.12s}
+.si:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.si.dragging{opacity:0.45;border-style:dashed}
+.si.drag-over{border-color:var(--accent2);background:#f5f4ff}
+.si-stripe{width:5px;flex-shrink:0}
+.si-body{flex:1;min-width:0;padding:0.38rem 0.55rem}
+.si-top{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.14rem}
+.si-num{font-size:0.54rem;color:var(--muted);font-weight:700;flex-shrink:0;min-width:14px}
+.si-drag{display:flex;flex-direction:column;gap:2px;padding:0.1rem 0.06rem;cursor:grab;opacity:0.28;transition:opacity 0.12s;flex-shrink:0}
+.si-drag:hover{opacity:0.65}
+.si-drag span{width:12px;height:1.5px;background:var(--muted);display:block;border-radius:1px}
+/* Sleeve position pill — prominent as spec requires */
+.pos-pill{font-size:0.6rem;font-weight:800;color:#fff;padding:0.05rem 0.42rem;border-radius:12px;background:var(--accent2);flex-shrink:0;letter-spacing:0.04em}
+.si-title{font-family:'DM Serif Display',serif;font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;line-height:1.2}
+.si-artist{font-size:0.52rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0.12rem}
+.si-tags{display:flex;gap:0.14rem;flex-wrap:wrap;align-items:center}
+.si-actions{display:flex;flex-direction:column;gap:0.16rem;align-items:center;padding:0.32rem 0.48rem 0.32rem 0;justify-content:center}
+.mv-btn{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:0.5rem;padding:0.1rem 0.24rem;border-radius:3px;font-family:inherit;transition:all 0.12s}
+.mv-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.mv-btn:disabled{opacity:0.18;cursor:not-allowed}
+.rmb{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:0.6rem;padding:0.1rem 0.24rem;border-radius:3px;transition:all 0.12s}
+.rmb:hover{color:var(--red);border-color:var(--red)}
+/* ANALYSIS */
+.aw{padding:0.6rem}
+.asec{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.6rem;margin-bottom:0.38rem;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+.atitle{font-size:0.54rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:0.38rem}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:0.16rem 0;border-bottom:1px solid var(--border);font-size:0.6rem}
+.srow:last-child{border-bottom:none}
+.srow span:first-child{color:var(--muted)}
+.bviz{display:flex;gap:2px;align-items:flex-end;height:48px;margin-top:0.3rem}
+.bbar{flex:1;border-radius:2px 2px 0 0;min-height:2px}
+.sug{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:4px;padding:0.38rem 0.52rem;margin-top:0.2rem;font-size:0.56rem;color:var(--text);line-height:1.6}
+/* CAMELOT */
+.cwheel{display:grid;grid-template-columns:repeat(6,1fr);gap:0.16rem;margin-top:0.28rem}
+.ckey{padding:0.2rem 0.05rem;border-radius:4px;font-size:0.46rem;text-align:center;border:1px solid var(--border);background:var(--surface2);color:var(--muted)}
+.ckey.inset{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.ckey.compat{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+/* STICKER GUIDE */
+.sticker-grid{padding:0.55rem;display:flex;flex-direction:column;gap:0.45rem}
+.sticker-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.sticker-card-head{padding:0.4rem 0.65rem;display:flex;align-items:center;gap:0.45rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sticker-release{font-family:'DM Serif Display',serif;font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticker-artist{font-size:0.52rem;color:var(--muted);margin-top:0.03rem}
+.sticker-tracks{padding:0.38rem 0.65rem;display:flex;flex-direction:column;gap:0.3rem}
+.sticker-row{display:flex;align-items:center;gap:0.45rem}
+.sticker{width:36px;height:36px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.sk{font-size:0.55rem;font-weight:800;line-height:1}
+.sb{font-size:0.34rem;opacity:0.9;line-height:1;margin-top:0.04rem}
+.sticker-info{flex:1;min-width:0}
+.sticker-tname{font-size:0.62rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticker-tmeta{font-size:0.48rem;color:var(--muted);display:flex;gap:0.25rem;margin-top:0.05rem;flex-wrap:wrap}
+.sticker-pos{font-size:0.62rem;font-weight:800;color:var(--accent2);flex-shrink:0;min-width:26px;text-align:right}
+.sticker-icon{width:36px;height:36px;border-radius:5px;background:var(--surface3);border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0}
+.print-hint{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0.48rem 0.65rem;font-size:0.52rem;color:var(--muted);line-height:1.7;margin:0 0.55rem 0.4rem}
+.print-btn{display:flex;align-items:center;gap:0.25rem;padding:0.28rem 0.6rem;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-family:inherit;font-size:0.56rem;color:var(--muted);transition:all 0.12s;font-weight:500}
+.print-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* EMPTY / ERROR */
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--muted)}
+.empty .ei{font-size:2rem;margin-bottom:0.55rem}
+.empty h3{font-family:'DM Serif Display',serif;font-size:1rem;color:var(--text);margin-bottom:0.28rem}
+.empty p{font-size:0.6rem;line-height:1.75}
+.err-bar{background:#fff0ee;border-bottom:1px solid var(--red);color:var(--red);padding:0.38rem 1.1rem;font-size:0.58rem;flex-shrink:0}
+.idb-bar{padding:0.22rem 1.1rem;font-size:0.54rem;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.36rem;flex-shrink:0}
+.idb-dot{width:5px;height:5px;border-radius:50%;background:var(--border);flex-shrink:0}
+.idb-dot.saved{background:var(--green)}
+.idb-dot.saving{background:var(--orange);animation:pulse 1s infinite}
+/* BUTTONS */
+.btn{background:var(--accent);color:#fff;border:none;padding:0.35rem 0.85rem;font-size:0.63rem;font-weight:700;border-radius:5px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.13s}
+.btn:hover{background:#7a5520}
+.btn.sec{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn.sec:hover{background:var(--surface3)}
+.btn.sm{padding:0.16rem 0.5rem;font-size:0.56rem}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+/* CONNECT */
+.inp-row{display:flex;gap:0.4rem;margin-bottom:0.5rem}
+.inp{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.42rem 0.75rem;font-family:inherit;font-size:0.66rem;border-radius:5px;outline:none;transition:border-color 0.16s;width:100%}
+.inp:focus{border-color:var(--accent);background:#fff}
+.note{font-size:0.56rem;color:var(--muted);line-height:1.65;margin-top:0.25rem}
+.note a{color:var(--accent2)}
+.drop-zone{border:2px dashed var(--border);border-radius:6px;padding:1.3rem 1rem;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--muted);font-size:0.6rem;line-height:1.9;margin-bottom:0.5rem;display:block;font-family:inherit}
+.drop-zone:hover,.drop-zone.dg{border-color:var(--accent);color:var(--accent);background:#faf6ee}
+.drop-zone small{display:block;font-size:0.5rem;opacity:0.6;margin-top:0.1rem}
+.load-tip{font-size:0.54rem;color:var(--muted);line-height:1.65;margin-top:0.6rem;padding:0.52rem;background:var(--surface2);border:1px solid var(--border);border-radius:5px}
+/* PRINT */
+@media print{
+  .header,.engine-bar,.search-wrap,.tagcloud-bar,.tagcloud-body,.left-panel,.tabs,.set-ph,.idb-bar,.pager{display:none!important}
+  .main{display:block}
+  .right-panel{width:100%;border:none}
+  .sticker{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
+
+.ds-font{font-family:'DM Serif Display',serif;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+
+// ═══════════════════════════════════════════════════════
+//  ROLE TAXONOMY  — Intent-Based (BPM is metadata, not a classifier)
+// ═══════════════════════════════════════════════════════
+const ROLES = {
+  warmup:     {id:"warmup",     label:"Warm Up",     color:"#2980B9", emoji:"🔵"},
+  midset:     {id:"midset",     label:"Mid Set",     color:"#C9A800", emoji:"🟡"},
+  peak:       {id:"peak",       label:"Peak Time",   color:"#C0392B", emoji:"🔴"},
+  afterhours: {id:"afterhours", label:"After-Hours", color:"#7D3C98", emoji:"🟣"},
+};
+
+function autoRole(track){
+  const all=([...(track.styles||[]),...(track.genres||[])]).join(" ").toLowerCase();
+  const bpm=track.bpm||0;
+  // After-Hours: ambient, experimental, drone, late-night vibes
+  if(/ambient|drone|experimental|noise|new age|isolationism|microsound/.test(all)) return "afterhours";
+  if(/dub techno|minimal techno|abstract|microhouse|lowercase/.test(all)) return "afterhours";
+  if(/after.?hour|late.?night/.test(all)) return "afterhours";
+  // Warm Up: deep/slow/atmospheric
+  if(/warm.?up|deep house|balearic|nu.?jazz|soul jazz|slowcore|meditation/.test(all)) return "warmup";
+  if(/jazz funk|bossa/.test(all)) return "warmup";
+  if(bpm>0&&bpm<110) return "warmup";
+  // Peak: hard/fast/anthemic
+  if(/hard techno|industrial techno|gabber|hardcore|rave|big room/.test(all)) return "peak";
+  if(/trance|psytrance|hard trance|uplifting/.test(all)) return "peak";
+  if(/drum.?n.?bass|dnb|jungle|breakbeat/.test(all)) return "peak";
+  if(bpm>=135) return "peak";
+  // Mid Set: everything else in the dancing range
+  return "midset";
+}
+function assignRole(track){
+  if(track.roleOverride) return track.roleOverride;
+  return autoRole(track);
+}
+function roleOf(track){
+  return ROLES[assignRole(track)]||ROLES.midset;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CAMELOT DATA
+// ═══════════════════════════════════════════════════════
+const CAM = {
+  "1A":{n:"A♭m",c:["1A","12A","2A","1B"]},"2A":{n:"E♭m",c:["2A","1A","3A","2B"]},
+  "3A":{n:"B♭m",c:["3A","2A","4A","3B"]},"4A":{n:"Fm", c:["4A","3A","5A","4B"]},
+  "5A":{n:"Cm", c:["5A","4A","6A","5B"]},"6A":{n:"Gm", c:["6A","5A","7A","6B"]},
+  "7A":{n:"Dm", c:["7A","6A","8A","7B"]},"8A":{n:"Am", c:["8A","7A","9A","8B"]},
+  "9A":{n:"Em", c:["9A","8A","10A","9B"]},"10A":{n:"Bm",c:["10A","9A","11A","10B"]},
+  "11A":{n:"F♯m",c:["11A","10A","12A","11B"]},"12A":{n:"D♭m",c:["12A","11A","1A","12B"]},
+  "1B":{n:"B",  c:["1B","12B","2B","1A"]},"2B":{n:"F♯",c:["2B","1B","3B","2A"]},
+  "3B":{n:"D♭", c:["3B","2B","4B","3A"]},"4B":{n:"A♭",c:["4B","3B","5B","4A"]},
+  "5B":{n:"E♭", c:["5B","4B","6B","5A"]},"6B":{n:"B♭",c:["6B","5B","7B","6A"]},
+  "7B":{n:"F",  c:["7B","6B","8B","7A"]},"8B":{n:"C", c:["8B","7B","9B","8A"]},
+  "9B":{n:"G",  c:["9B","8B","10B","9A"]},"10B":{n:"D",c:["10B","9B","11B","10A"]},
+  "11B":{n:"A", c:["11B","10B","12B","11A"]},"12B":{n:"E",c:["12B","11B","1B","12A"]},
+};
+const CAM_KEYS = Object.keys(CAM);
+
+
+
+// ═══════════════════════════════════════════════════════
+//  PURE HELPERS
+// ═══════════════════════════════════════════════════════
+const esc=s=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=n=>Math.floor(Math.random()*n);
+
+function pitchDrift(bpmA,bpmB){
+  if(!bpmA||!bpmB) return null;
+  const pct=((bpmB-bpmA)/bpmA)*100;
+  return {pct:Math.abs(pct).toFixed(1), sign:pct>=0?"+":"-", high:Math.abs(pct)>6};
+}
+function vinylSide(pos){
+  if(!pos||pos==="—") return null;
+  const m=String(pos).trim().toUpperCase().match(/^([A-Z]+)/);
+  return m?m[1]:null;
+}
+function sameSide(a,b){
+  if(!a||!b||a.releaseId!==b.releaseId) return false;
+  const sa=vinylSide(a.pos),sb=vinylSide(b.pos);
+  if(!sa||!sb) return false;
+  return sa===sb;
+}
+function sameRecord(a,b){return !!(a&&b&&a.releaseId===b.releaseId);}
+function camCompat(a,b){
+  if(!a||!b) return null;
+  if(a===b) return "perfect";
+  if(CAM[a]?.c.includes(b)) return "compatible";
+  const an=parseInt(a),bn=parseInt(b),am=a.slice(-1),bm=b.slice(-1);
+  if(am===bm){const d=Math.abs(an-bn);if(Math.min(d,12-d)<=2)return "close";}
+  return "clash";
+}
+function guessBPM(genres=[],styles=[]){
+  const a=[...genres,...styles].join(" ").toLowerCase();
+  if(/drum.?n.?bass|drumstep/.test(a)) return 170+rnd(15);
+  if(/jungle|breakbeat/.test(a))       return 160+rnd(12);
+  if(/hard techno|gabber|hardcore/.test(a)) return 145+rnd(12);
+  if(/trance|psytrance/.test(a))       return 138+rnd(8);
+  if(/techno|industrial/.test(a))      return 132+rnd(10);
+  if(/tech house/.test(a))             return 127+rnd(6);
+  if(/deep house/.test(a))             return 122+rnd(6);
+  if(/house|chicago house|garage house|progressive house/.test(a)) return 124+rnd(8);
+  if(/electro/.test(a))                return 120+rnd(10);
+  if(/hip.?hop|rap|trap/.test(a))      return 88+rnd(16);
+  if(/ambient|drone|new age/.test(a))  return 72+rnd(20);
+  if(/disco/.test(a))                  return 118+rnd(8);
+  if(/funk/.test(a))                   return 100+rnd(12);
+  if(/soul|r.?n.?b/.test(a))           return 96+rnd(12);
+  if(/jazz/.test(a))                   return 120+rnd(20);
+  if(/reggae|dub/.test(a))             return 78+rnd(8);
+  if(/experimental|noise/.test(a))     return 80+rnd(30);
+  if(/electronic/.test(a))             return 122+rnd(14);
+  return 118+rnd(16);
+}
+
+function guessKey(uid){
+  return CAM_KEYS[Math.abs(uid*31+uid*7)%CAM_KEYS.length];
+}
+
+
+function cCol(c){return {perfect:"#9a6c2e",compatible:"#27ae60",close:"#c96a1a",clash:"#c0392b"}[c]||"#888";}
+function bpmBridge(a,b){
+  if(!a||!b) return null;
+  const d=Math.abs(a-b);
+  if(d===0) return {l:"same BPM",ok:true};
+  if(d<=8)  return {l:`±${d} BPM`,ok:true};
+  const r=Math.max(a,b)/Math.min(a,b);
+  if(r>1.9&&r<2.1) return {l:"×2 bridge",ok:true};
+  return {l:`±${d} BPM`,ok:false};
+}
+
+// ═══════════════════════════════════════════════════════
+//  SMART DJ ENGINES
+// ═══════════════════════════════════════════════════════
+function isVinylBlocked(a, b){ return sameSide(a, b); }
+function isHardClash(a, b){
+  if(!a||!b) return false;
+  const compat=camCompat(a.key,b.key);
+  const bridge=bpmBridge(a.bpm,b.bpm);
+  return compat==="clash" && bridge && !bridge.ok;
+}
+function isBlocked(a, b){ return isVinylBlocked(a,b) || isHardClash(a,b); }
+
+function camDistance(keyA, keyB){
+  if(!keyA||!keyB||keyA===keyB) return 0;
+  const an=parseInt(keyA), bn=parseInt(keyB);
+  const am=keyA.slice(-1), bm=keyB.slice(-1);
+  if(am===bm){ const d=Math.abs(an-bn); return Math.min(d,12-d); }
+  if(an===bn) return 1;
+  return 7;
+}
+
+function transitionScore(a, b, context={}){
+  if(!a||!b) return -9999;
+  const compat=camCompat(a.key,b.key);
+  const bridge=bpmBridge(a.bpm,b.bpm);
+  let score=0;
+  if(compat==="perfect")         score+=200;
+  else if(compat==="compatible") score+=130;
+  else if(compat==="close")      score+=50;
+  else                           score-=300;
+  if(bridge?.ok){
+    const d=Math.abs((a.bpm||0)-(b.bpm||0));
+    score+=Math.max(0, 70-d*5);
+  } else { score-=120; }
+  if(sameRecord(a,b)) score-=150;
+  const cg=(a.genres||[]).filter(g=>(b.genres||[]).includes(g)).length;
+  const cs=(a.styles||[]).filter(s=>(b.styles||[]).includes(s)).length;
+  score+=cg*12+cs*10;
+  if(context.recentReleases){
+    const timesPlayed=context.recentReleases.filter(id=>id===b.releaseId).length;
+    score-=timesPlayed*150;
+  }
+  if(context.usedReleases){
+    const totalTimes=context.usedReleases.filter(id=>id===b.releaseId).length;
+    if(totalTimes>=2) score-=300;
+  }
+  if(a.bpm&&b.bpm){
+    const delta=b.bpm-a.bpm;
+    if(delta>=0&&delta<=8)   score+=25;
+    else if(delta>8&&delta<=15) score+=8;
+    else if(delta<-10) score-=15;
+  }
+  return score;
+}
+
+function recentWindow(set, windowSize=4){
+  return set.slice(-windowSize).map(t=>t.releaseId);
+}
+
+function engine1BuildSet(pool, targetSize=20){
+  const eligible=pool.filter(t=>t.key&&t.bpm);
+  if(!eligible.length) return [];
+  const size=Math.min(targetSize, eligible.length);
+  const bpms=eligible.map(t=>t.bpm);
+  const minB=Math.min(...bpms), maxB=Math.max(...bpms), rangeB=maxB-minB||1;
+  function arcTarget(pos){
+    if(pos<0.12) return minB+rangeB*0.05;
+    if(pos<0.35) return minB+rangeB*0.28;
+    if(pos<0.58) return minB+rangeB*0.58;
+    if(pos<0.80) return minB+rangeB*0.88;
+    return minB+rangeB*0.50;
+  }
+  const openerPool=eligible.filter(t=>t.bpm<=minB+rangeB*0.30).sort(()=>Math.random()-0.5);
+  const opener=openerPool.length?openerPool[0]:eligible[Math.floor(Math.random()*Math.min(5,eligible.length))];
+  const set=[opener];
+  const used=new Set([opener.id]);
+  while(set.length<size){
+    const last=set[set.length-1];
+    const pos=set.length/size;
+    const target=arcTarget(pos);
+    const recent=recentWindow(set, 6);
+    const usedReleases=set.map(t=>t.releaseId);
+    const context={recentReleases:recent, usedReleases};
+    const scored=[];
+    for(const t of eligible){
+      if(used.has(t.id)) continue;
+      if(isVinylBlocked(last,t)) continue;
+      if(isHardClash(last,t)) continue;
+      if(set.filter(s=>s.releaseId===t.releaseId).length>=2) continue;
+      const compat=camCompat(last.key,t.key);
+      if(compat==="clash"&&pos<0.25) continue;
+      if(compat==="clash"&&pos>0.80) continue;
+      if(set.length<size-2){
+        const hasExit=eligible.some(nx=>!used.has(nx.id)&&nx.id!==t.id&&!isBlocked(t,nx));
+        if(!hasExit) continue;
+      }
+      let s=transitionScore(last,t,context);
+      s+=Math.max(0, 40-Math.abs(t.bpm-target)*2);
+      scored.push({t,s});
+    }
+    if(!scored.length) break;
+    scored.sort((a,b)=>b.s-a.s);
+    const topN=scored.slice(0,Math.min(3,scored.length));
+    const weights=[0.60,0.30,0.10].slice(0,topN.length);
+    const totalW=weights.reduce((a,b)=>a+b,0);
+    let r=Math.random()*totalW, chosen=topN[0].t;
+    for(let i=0;i<topN.length;i++){ r-=weights[i]; if(r<=0){chosen=topN[i].t;break;} }
+    set.push(chosen);
+    used.add(chosen.id);
+  }
+  return set;
+}
+
+function engine2SortSet(tracks){
+  if(tracks.length<=2) return [...tracks];
+  let bestOpener=tracks[0], bestOpenerScore=-Infinity;
+  for(const t of tracks){
+    let score=0;
+    for(const o of tracks){
+      if(o.id===t.id) continue;
+      if(!isBlocked(t,o)) score+=transitionScore(t,o);
+      else score-=200;
+    }
+    score-=(t.bpm||130)*0.3;
+    if(score>bestOpenerScore){bestOpenerScore=score;bestOpener=t;}
+  }
+  const rem=[...tracks.filter(t=>t.id!==bestOpener.id)];
+  const sorted=[bestOpener];
+  while(rem.length>0){
+    const last=sorted[sorted.length-1];
+    const recent=recentWindow(sorted, 6);
+    const usedReleases=sorted.map(t=>t.releaseId);
+    const context={recentReleases:recent, usedReleases};
+    let candidates=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash");
+    if(!candidates.length) candidates=rem.filter(t=>!isBlocked(last,t));
+    if(!candidates.length) candidates=rem;
+    let best=candidates[0], bestScore=-Infinity;
+    for(const t of candidates){
+      const s=transitionScore(last,t,context);
+      if(s>bestScore){bestScore=s;best=t;}
+    }
+    sorted.push(best);
+    rem.splice(rem.indexOf(best),1);
+  }
+  function totalScore(arr){
+    let s=0;
+    for(let i=1;i<arr.length;i++) s+=transitionScore(arr[i-1],arr[i],{recentReleases:recentWindow(arr.slice(0,i),5)});
+    return s;
+  }
+  function isLegal(arr){
+    for(let i=1;i<arr.length;i++) if(isVinylBlocked(arr[i-1],arr[i])) return false;
+    return true;
+  }
+  let best=[...sorted], bestTotal=totalScore(best);
+  for(let pass=0;pass<5;pass++){
+    let improved=false;
+    for(let i=1;i<best.length-1;i++){
+      for(let j=i+1;j<best.length;j++){
+        const candidate=[...best.slice(0,i),...best.slice(i,j+1).reverse(),...best.slice(j+1)];
+        if(!isLegal(candidate)) continue;
+        const score=totalScore(candidate);
+        if(score>bestTotal){bestTotal=score;best=candidate;improved=true;}
+      }
+    }
+    if(!improved) break;
+  }
+  return best;
+}
+
+function setSuggestions(set){
+  if(set.length<2) return [];
+  const out=[];
+  for(let i=1;i<set.length;i++){
+    const p=set[i-1],c=set[i];
+    const compat=camCompat(p.key,c.key),diff=bpmBridge(p.bpm,c.bpm);
+    if(sameSide(p,c)) out.push(`🛑 ${i}→${i+1}: Same vinyl side (${p.releaseTitle} ${p.pos}/${c.pos}) — physically impossible!`);
+    else if(sameRecord(p,c)) out.push(`⟲ ${i}→${i+1}: Same record (${p.releaseTitle}) — flip required.`);
+    if(compat==="clash"&&!sameSide(p,c)) out.push(`⚠️ ${i}→${i+1}: Key clash (${p.key}→${c.key}). Use a breakdown.`);
+    if(diff&&!diff.ok&&!sameSide(p,c)) out.push(`🔀 ${i}→${i+1}: ${diff.l}. Bridge with percussion.`);
+    if(compat==="perfect"&&diff?.ok) out.push(`✨ ${i}→${i+1}: Perfect — let it ride.`);
+    const pd=pitchDrift(p.bpm,c.bpm);if(pd?.high)out.push(`⚡ ${i}→${i+1}: High pitch drift (${pd.sign}${pd.pct}%) — turntable strain.`);
+    if(compat==="compatible"&&diff?.ok) out.push(`💚 ${i}→${i+1}: Clean harmonic flow.`);
+  }
+  const bpms=set.map(t=>t.bpm).filter(Boolean);
+  if(bpms.length>1){
+    const range=Math.max(...bpms)-Math.min(...bpms);
+    if(range<5) out.push(`📊 Tight BPM range — locked groove.`);
+    if(range>25) out.push(`📊 Wide BPM spread (+${range}). Bridge with ambient intros.`);
+  }
+  const releaseCounts={};
+  set.forEach(t=>{releaseCounts[t.releaseId]=(releaseCounts[t.releaseId]||0)+1;});
+  const maxRepeat=Math.max(...Object.values(releaseCounts));
+  const uniqueReleases=Object.keys(releaseCounts).length;
+  if(maxRepeat>=3) out.push(`🔁 One record appears ${maxRepeat}× — consider spreading releases.`);
+  if(uniqueReleases>=set.length*0.8) out.push(`🎯 ${uniqueReleases} different records — great variety!`);
+  return out;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  INDEXEDDB PERSISTENCE (Phase 1)
+// ═══════════════════════════════════════════════════════
+const DB_NAME="ourh_v1", DB_VER=1, STORE="collection";
+let db=null;
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);};
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+
+async function dbSave(key, val){
+  await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).put(val,key);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e.target.error);
+  });
+}
+
+async function dbLoad(key){
+  await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,"readonly");
+    const req=tx.objectStore(STORE).get(key);
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+
+async function dbDelete(key){
+  await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e.target.error);
+  });
+}
+
+// Save entire collection to IndexedDB
+let saveTimer=null;
+function scheduleSave(){
+  S.idbStatus="saving";
+  updateIdbBar();
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{
+      await dbSave("dj_set", S.djSet);
+      await dbSave("collection_data",{
+        releases:S.releases,
+        username:S.username,
+        savedAt:Date.now()
+      });
+      S.idbStatus="saved";
+    }catch(e){S.idbStatus="error";}
+    updateIdbBar();
+  },1500);
+}
+
+async function loadFromDB(){
+  try{
+    const data=await dbLoad("collection_data");
+    if(data&&data.releases&&data.releases.length){
+      const {genres,styles,decades}=collectMeta(data.releases);
+      Object.assign(S,{
+        releases:data.releases,
+        username:data.username||S.username,
+        allGenres:genres,allStyles:styles,allDecades:decades||[],
+        totalReleases:data.releases.length,
+        loaded:true,
+        idbStatus:"saved",
+        idbSavedAt:data.savedAt
+      });
+      return true;
+    }
+  }catch(e){/* no saved data */}
+  return false;
+}
+
+async function clearDB(){
+  try{
+    await dbDelete("collection_data");
+    S.idbStatus="empty";
+    updateIdbBar();
+  }catch(e){}
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════════════════════
+function parseCSV(txt){
+  const lines=txt.trim().split(/\r?\n/);
+  if(lines.length<2) return [];
+  const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim());
+  const releases=[];
+  lines.slice(1).forEach((line,idx)=>{
+    if(!line.trim()) return;
+    const vals=[];let inQ=false,cur="";
+    for(const ch of line){
+      if(ch==='"'){inQ=!inQ;continue;}
+      if(ch===','&&!inQ){vals.push(cur.trim());cur="";continue;}
+      cur+=ch;
+    }
+    vals.push(cur.trim());
+    const o={};headers.forEach((h,i)=>{o[h]=vals[i]||"";});
+    const genres=(o["Genre"]||"").split(",").map(s=>s.trim()).filter(Boolean);
+    const styles=(o["Style"]||"").split(",").map(s=>s.trim()).filter(Boolean);
+    const relId=parseInt(o["release_id"])||idx+1;
+    const relArtist=o["Artist"]||"Unknown";
+    const relTitle=o["Title"]||"Unknown";
+    const bpm=guessBPM(genres,styles);
+    if(!relTitle&&!relArtist) return;
+    releases.push({
+      id:relId,title:relTitle,artist:relArtist,
+      genres,styles,thumb:null,year:parseInt(o["Released"])||0,label:o["Label"]||"",
+      tracks:[{
+        id:`${relId}-0`,pos:"—",title:relTitle,trackArtist:relArtist,
+        bpm,key:guessKey(relId),duration:"",genres,styles,
+        releaseId:relId,releaseTitle:relTitle,releaseArtist:relArtist,
+        thumb:null,year:parseInt(o["Released"])||0,label:o["Label"]||""
+      }]
+    });
+  });
+  return releases;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  DEMO DATA — 40 realistic records across genres/energies
+// ═══════════════════════════════════════════════════════
+function buildDemoReleases(){
+  const raw=[
+    // [id, artist, title, year, label, genres, styles, tracks]
+    // tracks: [pos, title, bpm, key, dur]
+    [1001,"Larry Heard","Sceneries Not Songs",1993,"Alleviated","Electronic",["Deep House","Ambient House"],[["A1","Can You Feel It",117,"8B","6:12"],["A2","The Sun Can't Compare",119,"9B","7:04"],["B1","What About This Love",118,"8A","5:55"],["B2","Missing You",116,"7A","6:40"]]],
+    [1002,"Aphex Twin","Selected Ambient Works Vol. II",1994,"Warp","Electronic",["Ambient","IDM"],[["A1","Cliffs",76,"3A","6:30"],["A2","Stone In Focus",68,"2A","9:00"],["B1","Blue Calx",72,"4A","8:10"],["B2","Lichen",65,"3B","5:45"],["C1","Radiator",80,"5A","7:20"]]],
+    [1003,"Frankie Knuckles","Beyond The Mix",1991,"Virgin","Electronic",["House","Chicago House"],[["A1","The Whistle Song",122,"10B","7:15"],["A2","Baby Wants to Ride",124,"11B","6:45"],["B1","Your Love",120,"9A","8:30"],["B2","It's A Cold World",118,"8B","5:20"]]],
+    [1004,"Derrick May","Innovator",1997,"Transmat","Electronic",["Techno","Detroit Techno"],[["A1","Strings of Life",138,"10A","8:05"],["A2","It Is What It Is",134,"9A","6:40"],["B1","Nude Photo",132,"11A","7:15"],["B2","The Beginning",136,"10B","6:55"]]],
+    [1005,"Sade","Diamond Life",1984,"Epic","Pop","Soul",[["A1","Smooth Operator",100,"6B","4:17"],["A2","Your Love Is King",98,"5B","3:45"],["A3","Hang On to Your Love",96,"4B","4:55"],["B1","When Am I Going to Make a Living",102,"7B","4:10"],["B2","Cherry Pie",94,"6A","3:50"]]],
+    [1006,"Larry Levan","Journey Into Paradise",1993,"Sire","Electronic",["House","Garage House"],[["A1","Don't Make Me Wait",121,"8B","7:55"],["A2","Is It All Over My Face",120,"9B","6:30"],["B1","Heartbeat",122,"8A","8:15"],["B2","Keep On Jumpin",124,"7B","5:40"]]],
+    [1007,"Basic Channel","BCD",1995,"Basic Channel","Electronic",["Techno","Dub Techno"],[["A","Phylyps Trak",135,"6A","9:40"],["B","Enforcement",138,"7A","10:20"]]],
+    [1008,"Daft Punk","Homework",1997,"Virgin","Electronic",["House","French House","Electro"],[["A1","Da Funk",122,"5A","5:28"],["A2","WDPK 83.7 FM",124,"6A","0:28"],["B1","Revolution 909",126,"7A","5:29"],["B2","Around the World",121,"5B","7:07"],["C1","Burnin",124,"6B","3:55"],["C2","Rock'n Roll",128,"8B","7:35"]]],
+    [1009,"Marvin Gaye","What's Going On",1971,"Tamla","Funk / Soul",["Soul","Funk"],[["A1","What's Going On",97,"8B","3:53"],["A2","What's Happening Brother",96,"7B","2:58"],["A3","Flyin' High",99,"9B","3:50"],["B1","Mercy Mercy Me",98,"8A","3:15"],["B2","Right On",101,"9A","7:18"]]],
+    [1010,"Underground Resistance","Revolution For Change",1992,"Underground Resistance","Electronic",["Techno","Detroit Techno"],[["A","Riot",140,"5A","6:30"],["B","Punisher",142,"6A","7:15"]]],
+    [1011,"Masters At Work","MAW Records",1996,"MAW","Electronic",["House","Latin House","Deep House"],[["A1","To Be In Love",124,"7B","8:10"],["A2","Iyamba",126,"8B","7:40"],["B1","Work",128,"9B","6:55"],["B2","The Ha Dance",124,"7A","7:20"]]],
+    [1012,"Earth Wind & Fire","That's The Way Of The World",1975,"Columbia","Funk / Soul",["Soul","Funk","Disco"],[["A1","Shining Star",103,"9B","2:50"],["A2","That's the Way of the World",100,"8B","5:04"],["A3","Happy Feelin'",97,"7B","3:44"],["B1","All About Love",99,"8A","4:41"],["B2","Yearnin' Learnin'",102,"9A","4:05"]]],
+    [1013,"DJ Sprinkles","Midtown 120 Blues",2008,"Comatonse","Electronic",["Deep House","Ambient House"],[["A1","Grand Central, Pt. 1",114,"4A","9:30"],["A2","Ball'r (Madonna-Free Zone)",116,"5A","11:20"],["B1","Sisters, I Don't Know What This World is Coming To",113,"3A","10:45"],["B2","Grand Central, Pt. 2",115,"4B","8:20"]]],
+    [1014,"Theo Parrish","Parallel Dimensions",2000,"Sound Signature","Electronic",["Deep House","Experimental"],[["A1","Footwork",118,"6A","7:40"],["A2","Black Noise",122,"7A","9:15"],["B1","Falling Up",116,"5B","8:30"],["B2","The Creator Has a Master Plan",120,"6B","10:05"]]],
+    [1015,"James Brown","Sex Machine",1970,"King","Funk / Soul",["Funk","Soul"],[["A1","Get Up (I Feel Like Being A) Sex Machine",107,"2A","5:22"],["A2","Sister Ray",105,"1A","2:58"],["B1","I Got You (I Feel Good)",108,"3A","2:46"],["B2","Give It Up or Turnit A Loose",106,"2B","3:15"]]],
+    [1016,"Model 500","Classics",2001,"R&S","Electronic",["Techno","Detroit Techno"],[["A1","No UFO's",132,"4A","6:45"],["A2","The Chase",135,"5A","7:20"],["B1","Off To Battle",130,"3A","6:10"],["B2","Ocean To Ocean",128,"4B","8:00"]]],
+    [1017,"Floating Points","Elaenia",2015,"Pluto","Electronic",["Ambient","Jazz","Experimental"],[["A1","LesAlpx",95,"9A","5:50"],["A2","Nespole",92,"8A","4:35"],["B1","Silhouettes (I, II & III)",98,"10A","14:20"],["B2","Ratio",90,"9B","7:10"]]],
+    [1018,"Pepe Bradock","Deep Burnt",1999,"Atavisme","Electronic",["Deep House"],[["A","Deep Burnt",117,"3A","10:30"],["B","Burning",119,"4A","9:55"]]],
+    [1019,"Parliament","Mothership Connection",1975,"Casablanca","Funk / Soul",["Funk","Soul","P-Funk"],[["A1","P-Funk",108,"11A","5:38"],["A2","Mothership Connection",104,"10A","4:54"],["B1","Supergroovalisticprosifunkstication",110,"12A","6:20"],["B2","Give Up the Funk",106,"11B","5:24"]]],
+    [1020,"Bicep","Bicep",2017,"Ninja Tune","Electronic",["House","Techno"],[["A1","Glue",128,"8A","7:10"],["A2","Vale",124,"7A","6:50"],["B1","Ayr",126,"8B","8:20"],["B2","Kites",130,"9A","6:30"],["C1","Opal",122,"7B","7:40"]]],
+    [1021,"Ron Trent","Morning Factory",1997,"Prescription","Electronic",["Deep House","Chicago House"],[["A1","Morning Factory",118,"5A","9:45"],["A2","Afrodisiac",120,"6A","8:30"],["B1","Altered States",116,"4A","10:20"],["B2","The Seducer",119,"5B","7:50"]]],
+    [1022,"Actress","R.I.P",2012,"Honest Jon's","Electronic",["Techno","Ambient","Experimental"],[["A1","Hubble",125,"2A","4:35"],["A2","N.E.W",128,"3A","4:20"],["B1","Ascending",122,"2B","5:10"],["B2","IWAAD",126,"3B","4:55"],["C1","Lost",120,"1A","6:30"]]],
+    [1023,"Stevie Wonder","Songs in the Key of Life",1976,"Tamla","Funk / Soul",["Soul","R&B","Funk"],[["A1","Love's in Need of Love Today",100,"7B","7:05"],["A2","Have a Talk with God",99,"6B","2:42"],["A3","Village Ghetto Land",96,"5B","3:26"],["B1","I Wish",107,"8B","4:10"],["B2","Knocks Me Off My Feet",98,"7A","4:07"]]],
+    [1024,"Ricardo Villalobos","Dependent and Happy",2003,"Perlon","Electronic",["Minimal Techno","Tech House"],[["A1","Enfants",128,"7A","9:10"],["A2","Dexter",130,"8A","8:30"],["B1","Alcatraz",132,"9A","10:05"],["B2","Kernspin",126,"6A","7:45"]]],
+    [1025,"Moodymann","Forevernevermore",2000,"Planet E","Electronic",["Deep House","Soul","Funk"],[["A1","I'd Rather Be Lonely",120,"8B","7:30"],["A2","Shades Of Jae",118,"7B","8:45"],["B1","It's 4 AM",122,"9B","6:55"],["B2","Tribute to Motown",116,"6B","9:20"]]],
+    [1026,"Jeff Mills","The Bells",1996,"Axis","Electronic",["Techno","Detroit Techno"],[["A","The Bells",140,"9A","5:10"],["B","The Bells (Remix)",143,"10A","6:30"]]],
+    [1027,"Four Tet","Rounds",2003,"Domino","Electronic",["IDM","Folktronica","Ambient"],[["A1","Hands",95,"6B","5:40"],["A2","She Moves She",92,"5B","4:50"],["B1","Spirit Fingers",98,"7B","6:20"],["B2","My Angel Rocks Back and Forth",90,"5A","5:10"],["C1","Slow Jam",88,"4A","8:30"]]],
+    [1028,"Farley Jackmaster Funk","Love Can't Turn Around",1986,"DJ International","Electronic",["House","Chicago House"],[["A","Love Can't Turn Around",122,"9B","6:45"],["B","Love Can't Turn Around (Dub)",124,"9B","6:30"]]],
+    [1029,"Burial","Untrue",2007,"Hyperdub","Electronic",["UK Garage","Ambient","Post-Dubstep"],[["A1","Archangel",138,"3A","4:15"],["A2","Near Dark",140,"4A","4:50"],["B1","Shell of Light",136,"2A","5:20"],["B2","Raver",142,"5A","3:55"],["C1","Homeless",134,"3B","5:40"],["C2","Endorphin",130,"2B","4:30"]]],
+    [1030,"Curtis Mayfield","Superfly",1972,"Curtom","Funk / Soul",["Soul","Funk","R&B"],[["A1","Little Child Runnin' Wild",98,"5B","3:47"],["A2","Pusherman",96,"4B","5:44"],["A3","Freddie's Dead",100,"5A","5:43"],["B1","Superfly",102,"6B","4:00"],["B2","Give Me Your Love",97,"5B","4:41"]]],
+    [1031,"Donna Summer","I Feel Love",1977,"Casablanca","Electronic",["Disco","Synth-pop"],[["A","I Feel Love",126,"8B","8:10"],["B","I Feel Love (Dub)",128,"8B","8:40"]]],
+    [1032,"Robert Hood","Internal Empire",1994,"Metroplex","Electronic",["Techno","Minimal Techno"],[["A1","Minimal Nation",140,"6A","7:30"],["A2","Internal Empire",144,"7A","6:45"],["B1","Moveable Parts",138,"5A","8:10"],["B2","Protein Valve",142,"6B","7:20"]]],
+    [1033,"Kerri Chandler","A Basement, A Red Light & A Feelin'",1994,"Madhouse","Electronic",["Deep House","House"],[["A1","Rain",121,"9A","8:30"],["A2","Atmosphere",118,"8A","9:15"],["B1","Bar A Thym",122,"10A","7:45"],["B2","Clavicle",120,"9B","8:00"]]],
+    [1034,"Miles Davis","Kind of Blue",1959,"Columbia","Jazz","Modal",[["A1","So What",130,"7A","9:22"],["A2","Freddie Freeloader",126,"8A","9:46"],["B1","Blue in Green",94,"6A","5:37"],["B2","All Blues",128,"7B","11:33"]]],
+    [1035,"Move D","Fabric 50",2010,"Fabric","Electronic",["Deep House","Techno"],[["A1","Disco Discharge",124,"5A","7:20"],["A2","Late Night Moves",122,"4A","8:35"],["B1","Frühstück",126,"6A","6:50"],["B2","Together",120,"5B","9:10"]]],
+    [1036,"A Guy Called Gerald","Black Secret Technology",1995,"Juice Box","Electronic",["Jungle","Drum n Bass","UK Garage"],[["A1","Voodoo Ray",135,"8A","7:45"],["A2","Nazinji Zaka",160,"9A","5:30"],["B1","Energy",165,"10A","6:20"],["B2","Dark Synthesis",162,"8B","5:55"]]],
+    [1037,"Chic","C'est Chic",1978,"Atlantic","Funk / Soul",["Disco","Funk"],[["A1","Chic Cheer",118,"4B","1:40"],["A2","Le Freak",120,"5B","5:37"],["A3","Savoir Faire",116,"4A","5:55"],["B1","Happy Man",119,"5A","5:50"],["B2","I Want Your Love",118,"4B","6:08"]]],
+    [1038,"Hieroglyphic Being","The Disco's Of Imhotep",2012,"RVNG Intl.","Electronic",["Techno","Experimental","Acid"],[["A1","Acid Rain",130,"11A","8:40"],["A2","Magnetic North",133,"12A","7:15"],["B1","We Are Not Alone",128,"10B","9:30"],["B2","Celestial Bodies",135,"11B","6:45"]]],
+    [1039,"Arca","Mutant",2015,"Mute","Electronic",["Experimental","Club","Ambient"],[["A1","Alive",100,"1A","2:10"],["A2","Mutant",98,"2A","3:30"],["B1","Vanity",95,"1B","4:45"],["B2","Umbilical",90,"12A","5:20"]]],
+    [1040,"Todd Terry","A Day in the Life Of…",1990,"Freeze","Electronic",["House","Deep House"],[["A1","Weekend",124,"8A","7:55"],["A2","Back To The Beat",126,"9A","7:30"],["B1","Bounce to the Beat",122,"7A","8:20"],["B2","To the Batmobile",128,"10A","6:40"]]],
+  ];
+
+  return raw.map(([id,artist,title,year,label,genreStr,styles,tracks])=>{
+    const genres=Array.isArray(genreStr)?genreStr:[genreStr];
+    return {
+      id,title,artist,genres,styles,
+      thumb:null,year,label,
+      tracks:tracks.map(([pos,tname,bpm,key,duration],ti)=>({
+        id:`${id}-${ti}`,pos,title:tname,trackArtist:artist,
+        bpm,key,duration,genres,styles,
+        releaseId:id,releaseTitle:title,releaseArtist:artist,
+        thumb:null,year,label
+      }))
+    };
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  DISCOGS API
+// ═══════════════════════════════════════════════════════
+function flattenTracklist(tl){
+  const out=[];
+  for(const t of tl){
+    const type=(t.type_||"track").toLowerCase();
+    if(type==="heading") continue;
+    const title=(t.title||"").trim();
+    if(t.sub_tracks&&t.sub_tracks.length){
+      for(const st of t.sub_tracks){
+        const stTitle=(st.title||"").trim();
+        if(!stTitle) continue;
+        const pos=st.position||(t.position||"");
+        out.push({...st,position:pos,artists:st.artists&&st.artists.length?st.artists:(t.artists||[])});
+      }
+    } else if(title){
+      out.push(t);
+    }
+  }
+  return out;
+}
+
+async function discogsGet(path){
+  const r=await fetch(`https://api.discogs.com${path}`,{
+    headers:{"Authorization":`Discogs token=${S.token}`,"User-Agent":"ourh/1.0"}
+  });
+  if(!r.ok){
+    let msg=`HTTP ${r.status}`;
+    try{const j=await r.json();msg=j.message||msg;}catch(e){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+async function loadCollection(){
+  S.loading=true;S.error="";S.loadMsg="Connecting to Discogs…";S.fetchProgress=2;
+  renderFull();
+  try{
+    const first=await discogsGet(`/users/${S.username}/collection/folders/0/releases?per_page=100&page=1&sort=added&sort_order=desc`);
+    const totalPages=first.pagination.pages;
+    S.totalReleases=first.pagination.items;
+    let rawList=[...first.releases];
+    for(let p=2;p<=totalPages;p++){
+      S.loadMsg=`Fetching collection page ${p}/${totalPages}…`;
+      S.fetchProgress=Math.round((p/totalPages)*25);
+      updateProgressUI();
+      const pg=await discogsGet(`/users/${S.username}/collection/folders/0/releases?per_page=100&page=${p}&sort=added&sort_order=desc`);
+      rawList=[...rawList,...pg.releases];
+      await sleep(150);
+    }
+    const releases=[];
+    for(let i=0;i<rawList.length;i++){
+      const raw=rawList[i];
+      const info=raw.basic_information;
+      S.loadMsg=`Loading tracklist ${i+1}/${rawList.length}: ${info.title}`;
+      S.fetchProgress=25+Math.round((i/rawList.length)*73);
+      updateProgressUI();
+      const genres=info.genres||[];
+      const styles=info.styles||[];
+      const relArtist=(info.artists||[]).map(a=>a.name.replace(/\s*\(\d+\)$/,'')).join(", ")||"Unknown";
+      const bpmBase=guessBPM(genres,styles);
+      let tracks=[];
+      try{
+        let releaseData=null;
+        for(let attempt=0;attempt<2;attempt++){
+          try{
+            releaseData=await discogsGet(`/releases/${info.id}`);
+            break;
+          }catch(e){
+            if(attempt===0&&(e.message.includes("429")||e.message.includes("rate"))){
+              await sleep(2500);
+            } else { throw e; }
+          }
+        }
+        await sleep(100);
+        const tl=(releaseData||{}).tracklist||[];
+        const flatTracks=flattenTracklist(tl);
+        tracks=flatTracks.map((t,ti)=>{
+          const bpmVar=bpmBase+rnd(9)-4;
+          const tArtist=(t.artists||[]).map(a=>a.name.replace(/\s*\(\d+\)$/,'')).join(", ")||relArtist;
+          return {
+            id:`${info.id}-${ti}`,
+            pos:t.position||String(ti+1),
+            title:t.title||"Untitled",
+            trackArtist:tArtist,
+            bpm:bpmVar,
+            key:guessKey(info.id*31+ti*17),
+            bpmSource:"guess",
+            keySource:"guess",
+            duration:t.duration||"",
+            genres,styles,
+            releaseId:info.id,
+            releaseTitle:info.title,
+            releaseArtist:relArtist,
+            thumb:info.thumb||null,
+            year:info.year||0,
+            label:(info.labels||[]).map(l=>l.name).join(", ")||""
+          };
+        });
+      }catch(e){
+        console.warn(`Tracklist fetch failed for ${info.title}:`,e);
+      }
+      // Phase 1 fix: ALWAYS show the record even with no tracklist
+      if(!tracks.length){
+        tracks=[{
+          id:`${info.id}-0`,
+          pos:"A",
+          title:info.title,
+          trackArtist:relArtist,
+          bpm:bpmBase,
+          key:guessKey(info.id),
+          duration:"",
+          genres,styles,
+          releaseId:info.id,
+          releaseTitle:info.title,
+          releaseArtist:relArtist,
+          thumb:info.thumb||null,
+          year:info.year||0,
+          label:(info.labels||[]).map(l=>l.name).join(", ")||"",
+          incomplete:true // flag for UI placeholder
+        }];
+      }
+      releases.push({
+        id:info.id,title:info.title,artist:relArtist,
+        genres,styles,thumb:info.thumb||null,
+        year:info.year||0,
+        label:(info.labels||[]).map(l=>l.name).join(", ")||"",
+        tracks
+      });
+    }
+    const {genres,styles,decades}=collectMeta(releases);
+    Object.assign(S,{releases,allGenres:genres,allStyles:styles,allDecades:decades,loaded:true,loading:false,fetchProgress:100,loadMsg:""});
+    renderFull();
+    scheduleSave();
+  }catch(e){
+    S.loading=false;S.error=e.message;
+    updateProgressUI();
+    const eb=document.querySelector(".err-bar");
+    if(eb) eb.textContent="⚠ "+e.message;
+    else renderFull();
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  BPM / KEY ENRICHMENT PIPELINE
+// ═══════════════════════════════════════════════════════
+// Strategy (all browser-side, no server needed):
+//   1. Tunebat public search  → best source for BPM+Key
+//   2. MusicBrainz + AcousticBrainz → fallback BPM
+//   3. Keep genre-guess if both fail
+//
+// Runs in the background after collection loads.
+// Updates tracks in-place and saves to IndexedDB.
+// Shows a live enrichment counter in the IDB bar.
+
+let enrichStats={done:0,enriched:0,total:0,running:false};
+
+function updateEnrichBar(){
+  const stats=document.getElementById("enrich-stats");
+  const btn=document.getElementById("enrich-btn");
+  if(enrichStats.running){
+    if(stats) stats.textContent=`Enriching… ${enrichStats.done}/${enrichStats.total} · ${enrichStats.enriched} matched`;
+    if(btn){btn.textContent="⏳ Enriching…";btn.disabled=true;}
+    updateIdbBar();
+  } else if(enrichStats.total>0){
+    if(stats) stats.textContent=`${enrichStats.enriched}/${enrichStats.total} enriched`;
+    if(btn){btn.textContent="⚡ Enrich BPM/Key";btn.disabled=false;}
+    updateIdbBar();
+  } else {
+    if(stats) stats.textContent="";
+    if(btn){btn.textContent="⚡ Enrich BPM/Key";btn.disabled=false;}
+    updateIdbBar();
+  }
+}
+
+async function enrichCollection(releases){
+  const allT=releases.flatMap(r=>r.tracks);
+  enrichStats={done:0,enriched:0,total:allT.length,running:true};
+  updateEnrichBar();
+
+  // Process in small batches to avoid hammering APIs
+  const BATCH=3;
+  for(let i=0;i<allT.length;i+=BATCH){
+    const batch=allT.slice(i,i+BATCH);
+    await Promise.all(batch.map(t=>enrichTrack(t)));
+    enrichStats.done=Math.min(i+BATCH,allT.length);
+    updateEnrichBar();
+    // Gentle rate limit: pause between batches
+    if(i+BATCH<allT.length) await sleep(400);
+  }
+
+  enrichStats.running=false;
+  updateEnrichBar();
+  // Save enriched data to IndexedDB
+  scheduleSave();
+  // Refresh visible list to show updated BPM/Keys
+  updateRecordList();
+}
+
+async function enrichTrack(track){
+  if(track.bpmSource==="enriched"&&track.keySource==="enriched") return;
+
+  const artist=(track.trackArtist||track.releaseArtist||"").trim();
+  const title=(track.title||"").trim();
+  const relTitle=(track.releaseTitle||"").trim();
+  const label=(track.label||"").trim();
+  const catNo=(track.catNo||"").trim();
+
+  // Helper: accept result if it gives us something new
+  function applyResult(res){
+    if(!res) return false;
+    let got=false;
+    if(res.bpm&&res.bpm>40&&res.bpm<220&&track.bpmSource!=="enriched"){
+      track.bpm=Math.round(res.bpm); track.bpmSource="enriched"; got=true;
+    }
+    if(res.key&&CAM[res.key]&&track.keySource!=="enriched"){
+      track.key=res.key; track.keySource="enriched"; got=true;
+    }
+    // Genre/style enrichment from shops
+    if(res.genres&&res.genres.length){
+      const newG=res.genres.filter(g=>!(track.genres||[]).includes(g));
+      if(newG.length){ track.genres=[...(track.genres||[]),...newG]; got=true; }
+    }
+    if(res.styles&&res.styles.length){
+      const newS=res.styles.filter(s=>!(track.styles||[]).includes(s));
+      if(newS.length){ track.styles=[...(track.styles||[]),...newS]; got=true; }
+    }
+    return got;
+  }
+
+  const needsBpm = track.bpmSource!=="enriched";
+  const needsKey = track.keySource!=="enriched";
+  if(!needsBpm&&!needsKey) return;
+
+  // ── SOURCE 1: Tunebat (best for BPM+Key) ─────────────────────────────
+  try{
+    const r=await tunebatSearch(`${artist} ${title}`);
+    if(r&&applyResult(r)&&!needsBpm&&!needsKey){ enrichStats.enriched++; return; }
+  }catch(e){}
+  await sleep(80);
+
+  // ── SOURCE 2: Beatport public search ─────────────────────────────────
+  try{
+    const r=await beatportSearch(artist, title);
+    if(r&&applyResult(r)&&track.bpmSource==="enriched"&&track.keySource==="enriched"){ enrichStats.enriched++; return; }
+  }catch(e){}
+  await sleep(80);
+
+  // ── SOURCE 3: Juno Download ───────────────────────────────────────────
+  try{
+    const r=await junoSearch(artist, title, relTitle);
+    if(r&&applyResult(r)&&track.bpmSource==="enriched"){ enrichStats.enriched++; return; }
+  }catch(e){}
+  await sleep(80);
+
+  // ── SOURCE 4: Last.fm track.getInfo (genre tags) ──────────────────────
+  try{
+    const r=await lastfmTrack(artist, title);
+    if(r){ applyResult(r); }
+  }catch(e){}
+  await sleep(80);
+
+  // ── SOURCE 5: MusicBrainz + AcousticBrainz ───────────────────────────
+  try{
+    const mbid=await mbSearch(artist, title);
+    if(mbid){
+      const ab=await abGet(mbid);
+      if(ab&&applyResult(ab)) enrichStats.enriched++;
+    }
+  }catch(e){}
+
+  if(track.bpmSource==="enriched"||track.keySource==="enriched") enrichStats.enriched++;
+}
+
+// ── Tunebat ───────────────────────────────────────────────────────────────
+async function tunebatSearch(query){
+  try{
+    const url=`https://tunebat.com/api/search?q=${encodeURIComponent(query)}&limit=1`;
+    const r=await fetch(url,{headers:{"Accept":"application/json"}});
+    if(!r.ok) return null;
+    const j=await r.json();
+    const hit=(j.data||j.results||j.items||[])[0];
+    if(!hit) return null;
+    const bpm=hit.bpm||hit.Bpm||hit.tempo||null;
+    const key=hit.camelot||hit.key||hit.Key||null;
+    if(!bpm&&!key) return null;
+    return {bpm:bpm?Math.round(bpm):null, key:normalizeCamelot(key)};
+  }catch(e){return null;}
+}
+
+// ── Beatport public search (HTML scrape) ─────────────────────────────────
+// Beatport's search page returns structured JSON-LD and meta tags we can parse
+async function beatportSearch(artist, title){
+  try{
+    const q=encodeURIComponent(`${artist} ${title}`);
+    const url=`https://www.beatport.com/search/tracks?q=${q}`;
+    const r=await fetch(url,{headers:{"Accept":"text/html","User-Agent":"Mozilla/5.0"}});
+    if(!r.ok) return null;
+    const html=await r.text();
+    // Beatport embeds __NEXT_DATA__ JSON in the page
+    const m=html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if(!m) return null;
+    const data=JSON.parse(m[1]);
+    // Navigate the Next.js page props to find track results
+    const tracks=data?.props?.pageProps?.tracks||
+                  data?.props?.pageProps?.data?.tracks?.data||
+                  data?.props?.pageProps?.dehydratedState?.queries?.[0]?.state?.data?.results||[];
+    if(!tracks.length) return null;
+    // Find best match by title similarity
+    const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
+    const target=norm(title);
+    const hit=tracks.find(t=>norm(t.name||t.title||"").includes(target)||target.includes(norm(t.name||t.title||"")));
+    if(!hit) return null;
+    const bpm=hit.bpm||hit.tempo||null;
+    const keyRaw=hit.key?.camelot_name||hit.key?.name||hit.camelot_key||null;
+    const genres=(hit.genre?[hit.genre.name]:hit.genres?.map(g=>g.name)||[]);
+    const styles=(hit.subgenre?[hit.subgenre.name]:hit.sub_genres?.map(g=>g.name)||[]);
+    return {
+      bpm:bpm?Math.round(bpm):null,
+      key:normalizeCamelot(keyRaw),
+      genres, styles
+    };
+  }catch(e){return null;}
+}
+
+// ── Juno Download search ──────────────────────────────────────────────────
+async function junoSearch(artist, title, relTitle){
+  try{
+    // Try catalog number first if available from the release, then title
+    const q=encodeURIComponent(`${artist} ${title||relTitle}`);
+    const url=`https://www.juno.co.uk/search/?q%5Ball%5D%5B%5D=${q}&order=relevance&facets%5BformatDescriptions%5D%5B%5D=12%22+Vinyl`;
+    const r=await fetch(url,{headers:{"Accept":"text/html","User-Agent":"Mozilla/5.0"}});
+    if(!r.ok) return null;
+    const html=await r.text();
+    // Juno embeds BPM in class="bpm" elements and genre tags
+    const bpmMatch=html.match(/class="bpm[^"]*"[^>]*>[\s\S]*?(\d{2,3}(?:\.\d)?)\s*BPM/i)||
+                   html.match(/(\d{2,3})\s*bpm/i);
+    const keyMatch=html.match(/camelot[^"]*"[^>]*>([\d]{1,2}[AB])/i)||
+                   html.match(/>(\d{1,2}[AB])<\/span>/);
+    // Genre extraction from Juno's genre tags
+    const genreMatches=[...html.matchAll(/class="[^"]*genre[^"]*"[^>]*>([^<]+)</gi)];
+    const genres=[...new Set(genreMatches.map(m=>m[1].trim()).filter(g=>g.length>2&&g.length<30))].slice(0,3);
+    const bpm=bpmMatch?parseFloat(bpmMatch[1]):null;
+    const key=keyMatch?normalizeCamelot(keyMatch[1]):null;
+    if(!bpm&&!key&&!genres.length) return null;
+    return {bpm, key, genres};
+  }catch(e){return null;}
+}
+
+// ── Last.fm track.getInfo ─────────────────────────────────────────────────
+// Last.fm tags often contain more accurate genre/style info than Discogs
+async function lastfmTrack(artist, title){
+  try{
+    // Last.fm public API — no key needed for basic track info
+    const url=`https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(title)}&format=json&api_key=bc31b36b1ef34ad49c2b36571e67d08d`;
+    const r=await fetch(url);
+    if(!r.ok) return null;
+    const j=await r.json();
+    const track=j.track;
+    if(!track) return null;
+    // Extract top tags as genre hints
+    const tags=(track.toptags?.tag||[]).map(t=>t.name).filter(t=>t.length>1&&t.length<25);
+    // Map Last.fm tags to Discogs-style genre/style strings
+    const genreMap={
+      "house":"House","deep house":"Deep House","tech house":"Tech House",
+      "techno":"Techno","minimal techno":"Minimal Techno","detroit techno":"Detroit Techno",
+      "ambient":"Ambient","drum and bass":"Drum n Bass","jungle":"Jungle",
+      "disco":"Disco","funk":"Funk","soul":"Soul","jazz":"Jazz",
+      "hip-hop":"Hip-Hop","hip hop":"Hip-Hop","trance":"Trance",
+      "progressive house":"Progressive House","electro":"Electro","acid":"Acid",
+      "dub techno":"Dub Techno","industrial":"Industrial","experimental":"Experimental",
+      "garage":"Garage House","uk garage":"UK Garage","breakbeat":"Breakbeat",
+    };
+    const mappedTags=tags.map(t=>genreMap[t.toLowerCase()]).filter(Boolean);
+    if(!mappedTags.length) return null;
+    return {genres:[], styles:mappedTags};
+  }catch(e){return null;}
+}
+
+// MusicBrainz recording search
+async function mbSearch(artist, title){
+  try{
+    const q=encodeURIComponent(`recording:"${title}" AND artist:"${artist}"`);
+    const url=`https://musicbrainz.org/ws/2/recording/?query=${q}&limit=1&fmt=json`;
+    const r=await fetch(url,{headers:{"User-Agent":"ourh/1.0 (https://ourh.vercel.app)"}});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return (j.recordings||[])[0]?.id||null;
+  }catch(e){return null;}
+}
+
+// AcousticBrainz high-level data (BPM + key)
+async function abGet(mbid){
+  try{
+    const url=`https://acousticbrainz.org/${mbid}/high-level?format=json`;
+    const r=await fetch(url);
+    if(!r.ok) return null;
+    const j=await r.json();
+    const bpm=j.rhythm?.bpm?.value||j.rhythm?.bpm||null;
+    const keyStr=j.tonal?.chords_key?.value||j.tonal?.key_key?.value||null;
+    const scaleStr=j.tonal?.chords_scale?.value||j.tonal?.key_scale?.value||null;
+    if(!bpm&&!keyStr) return null;
+    const key=keyStr?musicKeyToCamelot(keyStr,scaleStr):null;
+    return {bpm:bpm?Math.round(bpm):null, key};
+  }catch(e){return null;}
+}
+
+// Convert music theory key (e.g. "C", "A minor") to Camelot
+function musicKeyToCamelot(keyStr, scaleStr){
+  const noteMap={
+    "C":"8B","Db":"3B","D":"10B","Eb":"5B","E":"12B","F":"7B",
+    "Gb":"2B","G":"9B","Ab":"4B","A":"11B","Bb":"6B","B":"1B",
+    "C#":"3B","D#":"5B","F#":"2B","G#":"4B","A#":"6B"
+  };
+  const minorMap={
+    "C":"5A","Db":"12A","D":"7A","Eb":"2A","E":"9A","F":"4A",
+    "Gb":"11A","G":"6A","Ab":"1A","A":"8A","Bb":"3A","B":"10A",
+    "C#":"12A","D#":"2A","F#":"11A","G#":"1A","A#":"3A"
+  };
+  const k=(keyStr||"").trim();
+  const isMinor=(scaleStr||"").toLowerCase().includes("minor")||k.toLowerCase().includes("minor")||k.toLowerCase().includes("m");
+  const note=k.replace(/\s*(minor|major|m)\s*/gi,"").trim();
+  return isMinor?(minorMap[note]||null):(noteMap[note]||null);
+}
+
+// Normalize various key string formats to Camelot (e.g. "8A", "8 A", "Am"→"8A")
+function normalizeCamelot(str){
+  if(!str) return null;
+  const s=String(str).trim().toUpperCase().replace(/\s+/g,"");
+  // Already Camelot: "8A", "12B"
+  if(/^\d{1,2}[AB]$/.test(s)) return s;
+  // Camelot with space: "8 A" → "8A"
+  const m=s.match(/^(\d{1,2})\s*([AB])$/);
+  if(m) return m[1]+m[2];
+  // Music key notation — try conversion
+  return musicKeyToCamelot(str, str.includes("m")||str.includes("minor")?"minor":"major");
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  loaded:false, loading:false, loadMsg:"", error:"",
+  method:"api", token:"", username:"",
+  releases:[], allGenres:[], allStyles:[], allDecades:[],
+  search:"",
+  roleFilters:new Set(),
+  genreFilters:new Set(),
+  styleFilters:new Set(),
+  decadeFilters:new Set(),
+  page:1, totalReleases:0, fetchProgress:0,
+  djSet:[], tab:"set",
+  dragIdx:null, dragOverIdx:null,
+  idbStatus:"empty", idbSavedAt:null,
+  filterOpen:null,
+};
+const PAGE=30;
+
+
+// ═══════════════════════════════════════════════════════
+//  DATA UTILS
+// ═══════════════════════════════════════════════════════
+function allTracks(){return S.releases.flatMap(r=>r.tracks);}
+function inSet(tid){return S.djSet.some(t=>t.id===tid);}
+
+function decadeOf(year){
+  if(!year||year<1900) return null;
+  return Math.floor(year/10)*10+"s";
+}
+function collectMeta(releases){
+  const gs=new Set(),ss=new Set(),ds=new Set();
+  releases.forEach(r=>{
+    (r.genres||[]).forEach(g=>gs.add(g));
+    (r.styles||[]).forEach(s=>ss.add(s));
+    const d=decadeOf(r.year); if(d) ds.add(d);
+  });
+  return {genres:[...gs].sort(), styles:[...ss].sort(), decades:[...ds].sort()};
+}
+function filteredTracks(){
+  const q=S.search.toLowerCase().trim();
+  const rf=S.roleFilters,gf=S.genreFilters,sf=S.styleFilters,df=S.decadeFilters;
+  return allTracks().filter(t=>{
+    if(rf.size>0 && !rf.has(assignRole(t))) return false;
+    if(gf.size>0 && ![...gf].some(g=>(t.genres||[]).includes(g))) return false;
+    if(sf.size>0 && ![...sf].some(s=>(t.styles||[]).includes(s))) return false;
+    if(df.size>0 && !df.has(decadeOf(t.year||0))) return false;
+    if(!q) return true;
+    return [t.title,t.trackArtist,t.releaseTitle,t.releaseArtist,t.pos,
+            t.key,String(t.bpm||""),...(t.genres||[]),...(t.styles||[])]
+      .some(f=>f&&f.toLowerCase().includes(q));
+  });
+}
+
+const VCUES=["◆","▲","●","★","▼","■","◉","✦","⬟","⬡","⬢","◈","◇","△","▽","☽","⊕","⊗","⬤","◎"];
+function visualCue(id){return VCUES[Math.abs((id||0)*7+(id||0))%VCUES.length];}
+
+
+// ═══════════════════════════════════════════════════════
+//  DOM UPDATES
+// ═══════════════════════════════════════════════════════
+function updateProgressUI(){
+  const fill=document.querySelector(".prog-fill");
+  if(fill) fill.style.width=S.fetchProgress+"%";
+  const msg=document.getElementById("load-msg");
+  if(msg) msg.textContent=S.loadMsg;
+  const dot=document.querySelector(".dot");
+  if(dot) dot.className=S.loading?"dot orange":"dot";
+}
+function updateIdbBar(){
+  const bar=document.getElementById("idb-bar"); if(!bar) return;
+  const dot=bar.querySelector(".idb-dot"),txt=bar.querySelector(".idb-txt");
+  if(!dot||!txt) return;
+  if(S.idbStatus==="saved"){
+    dot.className="idb-dot saved";
+    txt.textContent="Cached"+(S.idbSavedAt?" · "+new Date(S.idbSavedAt).toLocaleTimeString():"");
+  } else if(S.idbStatus==="saving"){
+    dot.className="idb-dot saving"; txt.textContent="Saving…";
+  } else if(S.idbStatus==="error"){
+    dot.className="idb-dot"; txt.textContent="Cache error";
+  } else {
+    dot.className="idb-dot"; txt.textContent="No local cache";
+  }
+}
+function updateTabBtns(){
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.classList.toggle("on",btn.dataset.tab===S.tab);
+    if(btn.dataset.tab==="set") btn.textContent="Tracklist ("+S.djSet.length+")";
+  });
+}
+function updateRightPanel(){
+  if(S.tab==="set")          updateSetPanel();
+  else if(S.tab==="analysis") updateAnalysisPanel();
+  else if(S.tab==="keys")    updateKeysPanel();
+  else if(S.tab==="stickers") updateStickerPanel();
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  LIBRARY — flat track-first list
+// ═══════════════════════════════════════════════════════
+function updateRecordList(){
+  const list=document.getElementById("record-list");
+  const badge=document.getElementById("col-badge");
+  if(!list) return;
+  const tracks=filteredTracks();
+  const totalPages=Math.max(1,Math.ceil(tracks.length/PAGE));
+  const p=Math.min(S.page,totalPages);
+  const pageTracks=tracks.slice((p-1)*PAGE,p*PAGE);
+  if(badge) badge.textContent=tracks.length+" tracks · "+S.releases.length+" releases";
+  if(!pageTracks.length){
+    list.innerHTML='<div class="empty"><div class="ei">🔍</div><h3>No results</h3><p>Try different filters or clear the search.</p></div>';
+  } else {
+    // Group consecutive tracks from same release for visual clarity
+    const groups=[];
+    pageTracks.forEach(t=>{
+      const last=groups[groups.length-1];
+      if(last&&last.relId===t.releaseId) last.tracks.push(t);
+      else {
+        const rel=S.releases.find(r=>r.id===t.releaseId)||
+          {id:t.releaseId,title:t.releaseTitle,artist:t.releaseArtist,
+           thumb:t.thumb,year:t.year,label:t.label};
+        groups.push({relId:t.releaseId,rel,tracks:[t]});
+      }
+    });
+    list.innerHTML=groups.map(renderTrackGroup).join("");
+  }
+  const pager=document.getElementById("pager");
+  if(pager){
+    pager.style.display=totalPages>1?"flex":"none";
+    const pi=document.getElementById("pager-info");
+    if(pi) pi.textContent=p+"/"+totalPages;
+    const pp=document.getElementById("pager-prev"),pn=document.getElementById("pager-next");
+    if(pp) pp.disabled=p<=1;
+    if(pn) pn.disabled=p>=totalPages;
+  }
+}
+
+function renderTrackGroup({rel,tracks}){
+  const r=rel||{};
+  const thumbHtml=r.thumb
+    ?'<img src="'+esc(r.thumb)+'" loading="lazy" alt=""/>'
+    :'<span>'+visualCue(r.id||0)+'</span>';
+  const metaParts=[r.artist||"",r.year?String(r.year):"",r.label?esc(r.label):""].filter(Boolean);
+  return '<div class="tl-group">'
+    +'<div class="tl-rhead">'
+      +'<div class="tl-rthumb">'+thumbHtml+'</div>'
+      +'<div style="min-width:0;flex:1">'
+        +'<div class="tl-rname">'+esc(r.title||"Unknown")+'</div>'
+        +'<div class="tl-rmeta">'+metaParts.join(' · ')+'</div>'
+      +'</div>'
+    +'</div>'
+    +tracks.map(renderTrackRow).join("")
+  +'</div>';
+}
+
+function renderTrackRow(t){
+  const role=roleOf(t);
+  const isIn=inSet(t.id);
+  const bpmEnr=t.bpmSource==="enriched";
+  const keyEnr=t.keySource==="enriched";
+  const artistDiff=t.trackArtist&&t.trackArtist!==t.releaseArtist;
+  const rolesHtml=Object.values(ROLES).map(ro=>{
+    const act=assignRole(t)===ro.id;
+    return '<button class="rbtn'+(act?' act-'+ro.id:'')+'" data-rs="'+esc(t.id)+'|'+ro.id+'" title="'+ro.label+'">'+ro.emoji+'</button>';
+  }).join("");
+  return '<div class="tr">'
+    +'<div class="tr-stripe" style="background:'+role.color+'"></div>'
+    +'<div class="tr-pos" title="Sleeve position">'+esc(t.pos||"—")+'</div>'
+    +'<div class="tr-body">'
+      +'<div class="tr-title">'+esc(t.title)
+        +(artistDiff?' <span style="color:var(--muted);font-weight:400">— '+esc(t.trackArtist)+'</span>':'')
+      +'</div>'
+      +'<div class="tr-meta">'
+        +'<span class="role-pill" style="background:'+role.color+'">'+role.emoji+' '+role.label+'</span>'
+        +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM'+(bpmEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
+        +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+(keyEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
+        +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
+        +(t.incomplete?'<span class="tag-chip" style="opacity:0.5">⚠ partial</span>':'')
+      +'</div>'
+      +'<div class="tr-roles">'+rolesHtml+'</div>'
+    +'</div>'
+    +'<button class="tr-addbtn'+(isIn?' in':'')+'" data-tid="'+esc(t.id)+'">'+(isIn?'✓':'+ Set')+'</button>'
+  +'</div>';
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  SET PANEL
+// ═══════════════════════════════════════════════════════
+function updateSetPanel(){
+  const panel=document.getElementById("set-panel");
+  if(!panel||S.tab!=="set") return;
+  if(!S.djSet.length){
+    panel.innerHTML='<div class="empty"><div class="ei">🎚️</div><h3>Set is empty</h3><p>Add tracks with <strong>"+ Set"</strong>, or use <strong>Auto-Suggest</strong> to build a harmonic set.</p></div>';
+    return;
+  }
+  const n=S.djSet.length;
+  let html='<div class="set-list">';
+  S.djSet.forEach((t,i)=>{
+    const prev=S.djSet[i-1];
+    if(i>0){
+      const compat=camCompat(prev.key,t.key);
+      const diff=bpmBridge(prev.bpm,t.bpm);
+      const pd=pitchDrift(prev.bpm,t.bpm);
+      const sameSd=sameSide(t,prev);
+      const bc=sameSd?"warn":(!diff?.ok||compat==="clash")?"warn":"ok";
+      const parts=[];
+      if(sameSd) parts.push("🛑 same side — BLOCKED");
+      else{
+        if(sameRecord(t,prev)) parts.push("⟲ flip");
+        if(diff) parts.push(diff.l);
+        if(compat) parts.push('<span style="color:'+cCol(compat)+'">'+compat+'</span>');
+        if(pd) parts.push(pd.high
+          ?'<span class="pdrift-warn">⚡ '+pd.sign+pd.pct+'%</span>'
+          :'<span class="pdrift-ok">'+pd.sign+pd.pct+'%</span>');
+      }
+      html+='<div class="bridge '+bc+'">'+parts.join(' · ')+'</div>';
+    }
+    const role=roleOf(t);
+    html+='<div class="si" draggable="true" data-si="'+i+'">'
+      +'<div class="si-stripe" style="background:'+role.color+'"></div>'
+      +'<div class="si-body">'
+        +'<div class="si-top">'
+          +'<span class="si-num">'+(i+1)+'</span>'
+          +'<div class="si-drag" title="Drag to reorder"><span></span><span></span><span></span></div>'
+          +'<span class="pos-pill" title="Sleeve position · side '+(vinylSide(t.pos)||"?")+'">'+esc(t.pos||"—")+'</span>'
+          +'<div class="si-title">'+esc(t.title)+'</div>'
+        +'</div>'
+        +'<div class="si-artist">'+esc(t.releaseArtist)+' — '+esc(t.releaseTitle)+'</div>'
+        +'<div class="si-tags">'
+          +'<span class="role-pill" style="background:'+role.color+'">'+role.emoji+' '+role.label+'</span>'
+          +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM</span>':'')
+          +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+'</span>':'')
+          +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
+        +'</div>'
+      +'</div>'
+      +'<div class="si-actions">'
+        +'<button class="mv-btn" data-mv="up" data-idx="'+i+'" '+(i===0?"disabled":"")+'>▲</button>'
+        +'<button class="mv-btn" data-mv="dn" data-idx="'+i+'" '+(i===n-1?"disabled":"")+'>▼</button>'
+        +'<button class="rmb" data-tid="'+esc(t.id)+'" title="Remove">✕</button>'
+      +'</div>'
+    +'</div>';
+  });
+  html+='</div>';
+  panel.innerHTML=html;
+  attachDragHandlers();
+}
+
+
+function updateAnalysisPanel(){
+  const panel=document.getElementById("set-panel");
+  if(!panel||S.tab!=="analysis") return;
+  if(!S.djSet.length){
+    panel.innerHTML='<div class="empty"><div class="ei">📊</div><h3>No set yet</h3><p>Add tracks to see analysis.</p></div>';
+    return;
+  }
+  const bpms=S.djSet.map(t=>t.bpm).filter(Boolean);
+  const avgBPM=bpms.length?Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length):null;
+  const n=S.djSet.length;
+  const maxB=bpms.length?Math.max(...bpms):1;
+  const sugs=setSuggestions(S.djSet);
+  // Role counts
+  const rc={};
+  S.djSet.forEach(t=>{const r=assignRole(t);rc[r]=(rc[r]||0)+1;});
+  // Genre/style counts
+  const gc={},sc={};
+  S.djSet.forEach(t=>{
+    (t.genres||[]).forEach(g=>{gc[g]=(gc[g]||0)+1;});
+    (t.styles||[]).forEach(s=>{sc[s]=(sc[s]||0)+1;});
+  });
+  const sG=Object.entries(gc).sort((a,b)=>b[1]-a[1]);
+  const sS=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  let html='<div class="aw">';
+  // Stats
+  html+='<div class="asec"><div class="atitle">Set Stats</div>'
+    +'<div class="srow"><span>Tracks</span><span>'+n+'</span></div>'
+    +(avgBPM?'<div class="srow"><span>Avg BPM</span><span>'+avgBPM+'</span></div>':"")
+    +(bpms.length>1?'<div class="srow"><span>BPM Range</span><span>'+Math.min(...bpms)+'–'+Math.max(...bpms)+'</span></div>':"")
+    +'<div class="srow"><span>Releases</span><span>'+new Set(S.djSet.map(t=>t.releaseId)).size+'</span></div>'
+    +'<div class="srow"><span>Est. Duration</span><span>~'+Math.round(n*6)+' min</span></div>'
+  +'</div>';
+  // Role breakdown
+  html+='<div class="asec"><div class="atitle">Role Breakdown</div>';
+  Object.values(ROLES).forEach(r=>{
+    const c=rc[r.id]||0; if(!c) return;
+    html+='<div class="srow">'
+      +'<span style="display:flex;align-items:center;gap:0.3rem">'
+        +'<span style="width:8px;height:8px;border-radius:50%;background:'+r.color+';display:inline-block"></span>'
+        +r.emoji+' '+r.label
+      +'</span>'
+      +'<span style="display:flex;align-items:center;gap:0.35rem">'
+        +'<span style="font-size:0.48rem;color:var(--muted)">'+c+'t</span>'
+        +'<span style="width:'+(Math.round((c/n)*65)+5)+'px;height:3px;border-radius:2px;background:'+r.color+';display:inline-block"></span>'
+      +'</span>'
+    +'</div>';
+  });
+  html+='</div>';
+  // BPM arc
+  if(bpms.length>1){
+    html+='<div class="asec"><div class="atitle">Energy Arc (BPM)</div><div class="bviz">';
+    S.djSet.forEach(t=>{
+      const role=roleOf(t);
+      const h=t.bpm?Math.round((t.bpm/maxB)*100):20;
+      html+='<div class="bbar" style="height:'+h+'%;background:'+role.color+'" title="'+esc(t.title)+': '+(t.bpm||"?")+'BPM · '+role.label+'"></div>';
+    });
+    html+='</div><div style="display:flex;justify-content:space-between;font-size:0.44rem;color:var(--muted);margin-top:0.14rem"><span>intro</span><span>—</span><span>peak</span></div></div>';
+  }
+  // Pitch drift table
+  if(n>1){
+    html+='<div class="asec"><div class="atitle">Pitch Drift</div>';
+    let anyHigh=false;
+    for(let i=1;i<n;i++){
+      const pd=pitchDrift(S.djSet[i-1].bpm,S.djSet[i].bpm);
+      if(!pd) continue;
+      if(pd.high) anyHigh=true;
+      html+='<div class="srow"><span style="font-size:0.52rem">'+i+'→'+(i+1)+' · '+esc(S.djSet[i].title.slice(0,18))+'</span>'
+        +'<span>'+(pd.high
+          ?'<span class="pdrift-warn">⚡ '+pd.sign+pd.pct+'%</span>'
+          :'<span class="pdrift-ok">'+pd.sign+pd.pct+'%</span>')
+        +'</span></div>';
+    }
+    if(anyHigh) html+='<div style="font-size:0.48rem;color:var(--red);margin-top:0.28rem;line-height:1.5">⚡ >6% = high turntable pitch strain · formula: ((B−A)/A)×100</div>';
+    html+='</div>';
+  }
+  // Flow notes
+  if(sugs.length){
+    html+='<div class="asec"><div class="atitle">Flow Notes</div>';
+    sugs.forEach(s=>{html+='<div class="sug">'+esc(s)+'</div>';});
+    html+='</div>';
+  }
+  // Genre/style
+  if(sG.length||sS.length){
+    html+='<div class="asec"><div class="atitle">Genre & Style Mix</div>';
+    if(sG.length){
+      html+='<div style="font-size:0.48rem;color:var(--muted);margin-bottom:0.22rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">Genres</div>';
+      sG.forEach(([g,c])=>{
+        html+='<div class="srow"><span style="font-size:0.58rem">'+esc(g)+'</span>'
+          +'<span style="display:flex;align-items:center;gap:0.35rem"><span style="font-size:0.48rem;color:var(--muted)">'+c+'t</span>'
+          +'<span style="width:'+(Math.round((c/n)*65)+5)+'px;height:3px;background:var(--accent);border-radius:2px;display:inline-block"></span></span></div>';
+      });
+    }
+    if(sS.length){
+      html+='<div style="font-size:0.48rem;color:var(--muted);margin:0.3rem 0 0.22rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">Styles</div>';
+      sS.forEach(([s,c])=>{
+        html+='<div class="srow"><span style="font-size:0.58rem">'+esc(s)+'</span>'
+          +'<span style="display:flex;align-items:center;gap:0.35rem"><span style="font-size:0.48rem;color:var(--muted)">'+c+'t</span>'
+          +'<span style="width:'+(Math.round((c/n)*65)+5)+'px;height:3px;background:var(--accent2);border-radius:2px;display:inline-block"></span></span></div>';
+      });
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  panel.innerHTML=html;
+}
+
+
+function updateKeysPanel(){
+  const panel=document.getElementById("set-panel");
+  if(!panel||S.tab!=="keys") return;
+  const keys=new Set(S.djSet.map(t=>t.key).filter(Boolean));
+  const lastKey=S.djSet.length?S.djSet[S.djSet.length-1].key:null;
+  let html='<div class="aw"><div class="asec"><div class="atitle">Camelot Wheel</div>'
+    +'<div style="font-size:0.5rem;color:var(--muted);margin-bottom:0.28rem;line-height:1.7">'
+      +'<span style="color:var(--accent)">■</span> In set &nbsp;'
+      +'<span style="color:var(--accent2)">■</span> Compatible with last'
+    +'</div><div class="cwheel">';
+  CAM_KEYS.forEach(k=>{
+    const ins=keys.has(k),comp=lastKey&&!ins&&CAM[lastKey]?.c.includes(k);
+    html+='<div class="ckey'+(ins?" inset":comp?" compat":"")+'"><div style="font-weight:700">'+k+'</div><div style="font-size:0.38rem;opacity:0.75">'+CAM[k].n+'</div></div>';
+  });
+  html+='</div></div>';
+  html+='<div class="asec"><div class="atitle">Compatibility</div>'
+    +'<div style="font-size:0.55rem;color:var(--muted);line-height:2.2">'
+      +'<span style="color:var(--accent)">Perfect</span> — same key<br/>'
+      +'<span style="color:var(--green)">Compatible</span> — adjacent Camelot<br/>'
+      +'<span style="color:var(--orange)">Close</span> — slight tension<br/>'
+      +'<span style="color:var(--red)">Clash</span> — avoid unless intentional'
+    +'</div></div></div>';
+  panel.innerHTML=html;
+}
+
+
+function updateStickerPanel(){
+  const panel=document.getElementById("set-panel");
+  if(!panel||S.tab!=="stickers") return;
+  if(!S.djSet.length){
+    panel.innerHTML='<div class="empty"><div class="ei">🏷️</div><h3>No set yet</h3><p>Build a set first.</p></div>';
+    return;
+  }
+  const releaseMap=new Map();
+  S.djSet.forEach((t,i)=>{
+    if(!releaseMap.has(t.releaseId))
+      releaseMap.set(t.releaseId,{release:{id:t.releaseId,title:t.releaseTitle,artist:t.releaseArtist,thumb:t.thumb},tracks:[]});
+    releaseMap.get(t.releaseId).tracks.push({...t,setPos:i+1});
+  });
+  const posLabels=["Top","Middle","Bottom","Back"];
+  let html='<div class="print-hint">🏷️ <strong>Sticker Guide:</strong> Print this page. Each coloured circle = one sticker. Apply to the sleeve at the shown position. Colour = DJ role. Key + BPM printed on the sticker.</div>'
+    +'<div style="padding:0 0.55rem 0.38rem;display:flex;gap:0.3rem;flex-wrap:wrap">'
+      +'<button class="print-btn" onclick="window.print()">🖨 Print</button>'
+      +'<button class="print-btn" id="exp-txt">📋 Copy Tracklist</button>'
+    +'</div>'
+    +'<div style="padding:0 0.55rem 0.42rem;display:flex;gap:0.32rem;flex-wrap:wrap">';
+  Object.values(ROLES).forEach(r=>{
+    html+='<span style="display:flex;align-items:center;gap:0.2rem;font-size:0.52rem">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+r.color+';display:inline-block"></span>'
+      +r.emoji+' '+r.label+'</span>';
+  });
+  html+='</div><div class="sticker-grid">';
+  releaseMap.forEach(({release,tracks})=>{
+    const isWL=!release.thumb;
+    const vc=visualCue(release.id);
+    html+='<div class="sticker-card">'
+      +'<div class="sticker-card-head">'
+        +(isWL?'<div class="sticker-icon">'+vc+'</div>'
+          :'<div style="width:34px;height:34px;border-radius:3px;overflow:hidden;flex-shrink:0;border:1px solid var(--border)"><img src="'+esc(release.thumb)+'" style="width:100%;height:100%;object-fit:cover"/></div>')
+        +'<div style="min-width:0">'
+          +'<div class="sticker-release">'+esc(release.title)+'</div>'
+          +'<div class="sticker-artist">'+esc(release.artist)+'</div>'
+          +(isWL?'<div style="font-size:0.42rem;color:var(--orange)">⬜ White label · shape '+vc+'</div>':"")
+        +'</div>'
+      +'</div>'
+      +'<div class="sticker-tracks">';
+    tracks.forEach((t,ti)=>{
+      const role=roleOf(t);
+      const place=posLabels[ti]||("Pos "+(ti+1));
+      html+='<div class="sticker-row">'
+        +'<div class="sticker" style="background:'+role.color+'">'
+          +'<span class="sk">'+(t.key||"?")+'</span>'
+          +'<span class="sb">'+(t.bpm||"?")+'</span>'
+        +'</div>'
+        +'<div class="sticker-info">'
+          +'<div class="sticker-tname"><span style="color:var(--accent);font-size:0.5rem;margin-right:0.28rem">#'+t.setPos+'</span>'+esc(t.title)+'</div>'
+          +'<div class="sticker-tmeta">'
+            +'<span style="color:'+role.color+';font-weight:700">'+role.emoji+' '+role.label+'</span>'
+            +' · <span>'+(t.key||"?")+'·'+(CAM[t.key]?.n||"?")+'</span>'
+            +' · <span>'+(t.bpm||"?")+' BPM</span>'
+            +(t.duration?' · <span>'+esc(t.duration)+'</span>':"")
+          +'</div>'
+        +'</div>'
+        +'<div class="sticker-pos" title="Where on sleeve to stick it">'+esc(t.pos||"—")+'<br><span style="font-size:0.4rem;color:var(--muted);font-weight:400">'+place+'</span></div>'
+      +'</div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  panel.innerHTML=html;
+  document.getElementById("exp-txt")?.addEventListener("click",()=>{
+    const txt=S.djSet.map((t,i)=>(i+1)+". "+t.releaseArtist+" - "+t.title+" ("+t.releaseTitle+") | pos:"+t.pos+" | role:"+roleOf(t).label+" | "+(t.key||"?")+" | "+(t.bpm||"?")+" BPM").join("\n");
+    navigator.clipboard?.writeText(txt).then(()=>alert("Tracklist copied!")).catch(()=>{});
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  DRAG & DROP
+// ═══════════════════════════════════════════════════════
+function attachDragHandlers(){
+  document.querySelectorAll(".si[draggable]").forEach(el=>{
+    el.addEventListener("dragstart",e=>{S.dragIdx=parseInt(el.dataset.si);el.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+    el.addEventListener("dragend",()=>{el.classList.remove("dragging");document.querySelectorAll(".si").forEach(s=>s.classList.remove("drag-over"));S.dragIdx=null;S.dragOverIdx=null;});
+    el.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";const oi=parseInt(el.dataset.si);if(oi!==S.dragIdx){document.querySelectorAll(".si").forEach(s=>s.classList.remove("drag-over"));el.classList.add("drag-over");S.dragOverIdx=oi;}});
+    el.addEventListener("drop",e=>{e.preventDefault();const from=S.dragIdx,to=parseInt(el.dataset.si);if(from!==null&&from!==to){const arr=[...S.djSet];const[moved]=arr.splice(from,1);arr.splice(to,0,moved);S.djSet=arr;updateSetPanel();updateTabBtns();}});
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  TAG CLOUD — additive stacked filters
+// ═══════════════════════════════════════════════════════
+function renderTagCloud(){
+  const rf=S.roleFilters,gf=S.genreFilters,sf=S.styleFilters,df=S.decadeFilters;
+  function chip(label,cls,attr,val){
+    var a=val!==undefined?attr+'="'+esc(val)+'"':attr;
+    return '<button class="chip'+(cls?' '+cls:'')+'" '+a+'>'+label+'</button>';
+  }
+  function section(title,chips,hasActive){
+    return '<div class="tc-section">'
+      +'<div class="tc-lbl">'+title
+        +'<span class="tc-clear'+(hasActive?' active':'')+'" data-tc-clear="'+title.toLowerCase()+'">clear</span>'
+      +'</div>'
+      +'<div class="tc-chips">'+chips+'</div>'
+    +'</div>';
+  }
+  var roleChips=chip('All',rf.size===0?'on-all':'','data-rc-clear','')
+    +Object.values(ROLES).map(function(r){return chip(r.emoji+' '+r.label,rf.has(r.id)?'on-role-'+r.id:'','data-rc',r.id);}).join('');
+  var genreChips=chip('All',gf.size===0?'on-all':'','data-gc-clear','')
+    +S.allGenres.map(function(g){return chip(esc(g),gf.has(g)?'on-genre':'','data-gc',g);}).join('');
+  var styleChips=chip('All',sf.size===0?'on-all':'','data-sc-clear','')
+    +S.allStyles.map(function(s){return chip(esc(s),sf.has(s)?'on-style':'','data-sc',s);}).join('');
+  var decadeChips=chip('All',df.size===0?'on-all':'','data-dc-clear','')
+    +S.allDecades.map(function(d){return chip(d,df.has(d)?'on-decade':'','data-dc',d);}).join('');
+  return section('Role',roleChips,rf.size>0)
+    +(S.allGenres.length?section('Genre',genreChips,gf.size>0):'')
+    +(S.allStyles.length?section('Style',styleChips,sf.size>0):'')
+    +(S.allDecades.length?section('Decade',decadeChips,df.size>0):'');
+}
+function updateChips(){
+  var tc=document.getElementById("tagcloud-inner");
+  if(tc) tc.innerHTML=renderTagCloud();
+  updateTCBar();
+}
+function updateTCBar(){
+  var pills=document.getElementById("tc-pills");
+  if(!pills) return;
+  var active=[];
+  S.roleFilters.forEach(function(id){var r=ROLES[id];if(r)active.push({label:r.emoji+" "+r.label,color:r.color});});
+  S.genreFilters.forEach(function(g){active.push({label:g,color:"var(--accent)"});});
+  S.styleFilters.forEach(function(s){active.push({label:s,color:"var(--accent2)"});});
+  S.decadeFilters.forEach(function(d){active.push({label:d,color:"#2c7c5a"});});
+  if(!active.length){
+    pills.innerHTML="<em style='font-size:0.5rem;color:var(--muted)'>no filters</em>";
+  } else {
+    var html=active.slice(0,6).map(function(p){
+      return "<span class='tagcloud-bar-pill' style='background:"+p.color+"'>"+esc(p.label)+"</span>";
+    }).join("");
+    if(active.length>6) html+="<em style='font-size:0.5rem;color:var(--muted)'> +"+(active.length-6)+" more</em>";
+    pills.innerHTML=html;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  FULL RENDERS
+// ═══════════════════════════════════════════════════════
+function renderFull(){
+  const app=document.getElementById("app");
+  if(!S.loaded){
+    app.innerHTML=renderConnectHTML();
+    attachConnectEvents();
+  } else {
+    app.innerHTML=renderMainHTML();
+    attachMainEvents();
+    updateRecordList();
+    updateRightPanel();
+    updateIdbBar();
+    updateTCBar();
+  }
+}
+
+function renderConnectHTML(){
+  return '<header class="header">'
+    +'<div class="logo"><h1>ourh</h1><p>Intent-Based DJ Set Builder</p></div>'
+    +(S.loading?'<div class="hdr-right"><div class="dot orange"></div><span id="load-msg" style="color:var(--orange);font-size:0.58rem">'+esc(S.loadMsg)+'</span></div>':"")
+  +'</header>'
+  +'<div class="prog-bar"><div class="prog-fill" style="width:'+S.fetchProgress+'%"></div></div>'
+  +(S.error?'<div class="err-bar">⚠ '+esc(S.error)+'</div>':"")
+  +'<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;overflow:auto;background:var(--bg)">'
+    +'<div style="width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.8rem;box-shadow:0 4px 24px rgba(0,0,0,0.08)">'
+      +'<h2 class="ds-font" style="font-size:1.5rem;color:var(--accent);margin-bottom:0.28rem">Connect your collection</h2>'
+      +'<p style="font-size:0.63rem;color:var(--muted);line-height:1.8;margin-bottom:1rem">Load your Discogs library. Every track is a searchable entity — filter by <strong style="color:var(--text)">role</strong>, genre, style, and decade simultaneously.</p>'
+      +(S.idbSavedAt
+        ?'<div style="background:#f0f7f2;border:1px solid var(--green);border-radius:7px;padding:0.6rem 0.8rem;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.6rem">'
+          +'<span>💾</span><div style="flex:1;min-width:0"><div style="font-size:0.6rem;color:var(--green);font-weight:700">Cached collection</div>'
+          +'<div style="font-size:0.52rem;color:var(--muted);margin-top:0.05rem">Saved '+new Date(S.idbSavedAt).toLocaleDateString()+' · '+S.releases.length+' releases</div></div>'
+          +'<button class="btn" id="load-cache-btn" style="font-size:0.58rem;padding:0.28rem 0.7rem">Load Cache</button>'
+          +'<button class="btn sec" id="clear-cache-btn" style="font-size:0.58rem;padding:0.28rem 0.5rem">✕</button>'
+        +'</div>'
+        :"")
+      +'<div style="background:#f4f2ff;border:1px solid rgba(90,79,170,0.3);border-radius:7px;padding:0.6rem 0.8rem;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.6rem">'
+        +'<span style="font-size:1.1rem;flex-shrink:0">🎛️</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:0.6rem;color:var(--accent2);font-weight:700;margin-bottom:0.07rem">Try Demo Mode</div>'
+        +'<div style="font-size:0.54rem;color:var(--muted);line-height:1.6">20 records · House, Techno, Disco, Soul, Ambient &amp; more. <span style="color:var(--orange)">Discogs API: open file locally in browser.</span></div></div>'
+        +'<button class="btn" id="demo-btn" style="background:var(--accent2);font-size:0.58rem;padding:0.28rem 0.8rem;flex-shrink:0">▶ Demo</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:0.4rem;margin-bottom:0.85rem">'
+        +'<button id="m-api" style="flex:1;padding:0.45rem;font-size:0.6rem;text-align:center;background:'+(S.method==="api"?"#faf6ee":"var(--surface2)")+';border:1px solid '+(S.method==="api"?"var(--accent)":"var(--border)")+';border-radius:6px;cursor:pointer;color:'+(S.method==="api"?"var(--accent)":"var(--muted)")+';font-family:inherit;font-weight:600">🔑 Discogs API</button>'
+        +'<button id="m-csv" style="flex:1;padding:0.45rem;font-size:0.6rem;text-align:center;background:'+(S.method==="csv"?"#faf6ee":"var(--surface2)")+';border:1px solid '+(S.method==="csv"?"var(--accent)":"var(--border)")+';border-radius:6px;cursor:pointer;color:'+(S.method==="csv"?"var(--accent)":"var(--muted)")+';font-family:inherit;font-weight:600">📄 CSV Export</button>'
+      +'</div>'
+      +'<div id="method-body"></div>'
+    +'</div>'
+  +'</div>';
+}
+
+function renderMainHTML(){
+  const total=allTracks().length;
+  return '<header class="header">'
+    +'<div class="logo"><h1>ourh</h1>'
+      +'<p>'+esc(S.username)+' · '+S.releases.length+' releases · '+total+' tracks'
+        +(S.username==="demo"?' <span style="color:var(--accent2);font-size:0.48rem;border:1px solid var(--accent2);border-radius:3px;padding:0 0.28rem;margin-left:0.3rem">DEMO</span>':"")
+      +'</p>'
+    +'</div>'
+    +'<div class="hdr-right"><div class="dot"></div><span style="color:var(--green)">Loaded</span>'
+      +'<button class="btn sec sm" id="reset-btn">↩ Reset</button>'      +(S.token?'<button class="btn sec sm" id="logout-btn" style="font-size:0.54rem">⏏ Logout</button>':"")
+    +'</div>'
+  +'</header>'
+  +'<div class="prog-bar"></div>'
+  +(S.error?'<div class="err-bar">⚠ '+esc(S.error)+'</div>':"")
+  +'<div id="idb-bar" class="idb-bar">'  +'<div class="idb-dot"></div>'  +'<span class="idb-txt">—</span>'  +'<span style="flex:1"></span>'  +'<span id="enrich-stats" style="font-size:0.52rem;color:var(--muted)"></span>'  +'<button class="btn sm" id="enrich-btn" style="margin-left:0.5rem;font-size:0.54rem;padding:0.14rem 0.55rem;background:var(--surface2);color:var(--accent2);border:1px solid rgba(90,79,170,0.35)">⚡ Enrich BPM/Key</button>'+'</div>'
+  +'<div class="main">'
+    +'<div class="left-panel">'
+      +'<div class="ph"><span class="ptitle">Library</span><span class="badge" id="col-badge">—</span></div>'
+      +'<div class="engine-bar">'
+        +'<button class="engine-btn" id="engine1-btn">'
+          +'<span class="eb-icon">🧠</span>'
+          +'<span><span class="eb-title">Auto-Suggest Set</span><span class="eb-sub">Harmonic set · respects active filters + roles</span></span>'
+        +'</button>'
+      +'</div>'
+      +'<div class="search-wrap">'
+        +'<input id="search-input" placeholder="Search track, artist, key, BPM, genre, position…" value="'+esc(S.search)+'" autocomplete="off" spellcheck="false"/>'
+        +'<div class="search-hint">Filters stack: Role + Genre + Style + Decade + search all apply together</div>'
+      +'</div>'
+      +'<div class="tagcloud-bar" id="tc-bar"><div class="tagcloud-bar-left"><span class="tagcloud-bar-title">Filters</span><div class="tagcloud-bar-pills" id="tc-pills"></div></div><span class="tagcloud-toggle" id="tc-tog">&#9660;</span></div>'
+      +'<div class="tagcloud-body" id="tagcloud-wrap"><div class="tagcloud-inner" id="tagcloud-inner">'+renderTagCloud()+'</div></div>'
+      +'<div class="scroll"><div id="record-list"></div>'
+        +'<div class="pager" id="pager" style="display:none">'
+          +'<button class="btn sec sm" id="pager-prev">← Prev</button>'
+          +'<span id="pager-info"></span>'
+          +'<button class="btn sec sm" id="pager-next">Next →</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="right-panel">'
+      +'<div class="set-ph">'
+        +'<span class="ptitle">Set ('+S.djSet.length+')</span>'
+        +'<div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap">'
+          +'<button class="set-engine-btn" id="engine2-btn">✦ Smart Sort</button>'
+          +(S.djSet.length?'<button class="btn sec sm" id="clear-btn">Clear</button>':"")
+        +'</div>'
+      +'</div>'
+      +'<div class="tabs">'
+        +'<button class="tab'+(S.tab==="set"?" on":"")+'" data-tab="set">Tracklist ('+S.djSet.length+')</button>'
+        +'<button class="tab'+(S.tab==="analysis"?" on":"")+'" data-tab="analysis">Analysis</button>'
+        +'<button class="tab'+(S.tab==="keys"?" on":"")+'" data-tab="keys">Keys</button>'
+        +'<button class="tab'+(S.tab==="stickers"?" on":"")+'" data-tab="stickers">🏷️ Stickers</button>'
+      +'</div>'
+      +'<div class="scroll"><div id="set-panel"></div></div>'
+    +'</div>'
+  +'</div>';
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  EVENTS
+// ═══════════════════════════════════════════════════════
+function loadDemo(){
+  const releases=buildDemoReleases();
+  const {genres,styles,decades}=collectMeta(releases);
+  Object.assign(S,{releases,allGenres:genres,allStyles:styles,allDecades:decades,
+    totalReleases:releases.length,loaded:true,error:"",username:"demo",idbStatus:"empty"});
+  renderFull();
+}
+
+function attachConnectEvents(){
+  document.getElementById("oauth-btn")?.addEventListener("click",()=>{ window.location.href="/api/auth"; });
+  document.getElementById("demo-btn")?.addEventListener("click",loadDemo);
+  document.getElementById("m-api")?.addEventListener("click",()=>{S.method="api";renderFull();});
+  document.getElementById("m-csv")?.addEventListener("click",()=>{S.method="csv";renderFull();});
+  document.getElementById("load-cache-btn")?.addEventListener("click",()=>{S.loaded=true;renderFull();});
+  document.getElementById("auto-load-btn")?.addEventListener("click",()=>{ loadCollection(); });
+  document.getElementById("disconnect-btn")?.addEventListener("click",async()=>{
+    try{ await dbDelete("discogs_auth"); }catch(e){}
+    S.token=""; S.username=""; renderFull();
+  });
+  document.getElementById("clear-cache-btn")?.addEventListener("click",async()=>{
+    await clearDB();S.releases=[];S.idbSavedAt=null;renderFull();
+  });
+  renderMethodBody();
+}
+
+function renderMethodBody(){
+  const body=document.getElementById("method-body");
+  if(!body) return;
+  if(S.method==="api"){
+    body.innerHTML=
+      '<div class="inp-row"><input class="inp" id="inp-user" placeholder="Discogs username" value="'+esc(S.username)+'"/></div>'
+      +'<div class="inp-row"><input class="inp" id="inp-tok" type="password" placeholder="Personal access token…" value="'+esc(S.token)+'"/>'
+        +'<button class="btn" id="api-go" '+(S.loading?"disabled":"")+'>'+(S.loading?"Loading…":"Load")+'</button></div>'
+      +'<p class="note">Get token: <a href="https://www.discogs.com/settings/developers" target="_blank">discogs.com → Settings → Developers → Generate token</a></p>'
+      +'<div class="load-tip">⏱ Fetches full collection then each tracklist. Large libraries: 3–10 min. Cached to IndexedDB — instant on return.<br/><br/>💾 <strong>Gig-proof:</strong> If APIs fail, local metadata is used as fallback.</div>';
+    document.getElementById("inp-user").addEventListener("input",e=>{S.username=e.target.value;});
+    document.getElementById("inp-tok").addEventListener("input",e=>{S.token=e.target.value;});
+    document.getElementById("inp-tok").addEventListener("keydown",e=>{if(e.key==="Enter")startLoad();});
+    document.getElementById("api-go").addEventListener("click",startLoad);
+  } else {
+    body.innerHTML=
+      '<label class="drop-zone" id="dz"><input type="file" accept=".csv" id="csv-inp" style="display:none"/>'
+        +'📂 Drop Discogs CSV here or click to browse'
+        +'<small>Export from discogs.com → My Collection → Export</small>'
+      +'</label>'
+      +'<p class="note">CSV loads instantly.</p>';
+    const dz=document.getElementById("dz"),ci=document.getElementById("csv-inp");
+    dz.addEventListener("click",()=>ci.click());
+    dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("dg");});
+    dz.addEventListener("dragleave",()=>dz.classList.remove("dg"));
+    dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("dg");doCSVLoad(e.dataTransfer.files[0]);});
+    ci.addEventListener("change",e=>doCSVLoad(e.target.files[0]));
+  }
+}
+
+function startLoad(){
+  if(!S.token.trim()){alert("Please enter your Discogs token.");return;}
+  loadCollection();
+}
+function doCSVLoad(file){
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const releases=parseCSV(e.target.result);
+      if(!releases.length) throw new Error("No records found.");
+      const {genres,styles,decades}=collectMeta(releases);
+      Object.assign(S,{releases,allGenres:genres,allStyles:styles,allDecades:decades,
+        totalReleases:releases.length,loaded:true,error:""});
+      renderFull();scheduleSave();
+    }catch(err){S.error="CSV error: "+err.message;renderFull();}
+  };
+  r.readAsText(file);
+}
+
+let globalClickAttached=false;
+function attachMainEvents(){
+  document.getElementById("enrich-btn")?.addEventListener("click",()=>{
+    if(enrichStats.running) return;
+    const toEnrich=allTracks().filter(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
+    if(!toEnrich.length){alert("All tracks already enriched!");return;}
+    enrichCollection(S.releases);
+  });
+  document.getElementById("logout-btn")?.addEventListener("click",async()=>{
+    try{ await dbDelete("discogs_auth"); await dbDelete("collection_data"); await dbDelete("dj_set"); }catch(e){}
+    location.reload();
+  });
+  document.getElementById("reset-btn")?.addEventListener("click",()=>{
+    document.removeEventListener("click",handleGlobalClick);
+    globalClickAttached=false;
+    Object.assign(S,{loaded:false,releases:[],djSet:[],allGenres:[],allStyles:[],allDecades:[],
+      roleFilters:new Set(),genreFilters:new Set(),styleFilters:new Set(),decadeFilters:new Set(),
+      search:"",page:1,error:"",fetchProgress:0,loadMsg:"",loading:false,token:"",tab:"set"});
+    renderFull();
+  });
+  document.getElementById("tc-bar")?.addEventListener("click",function(){
+    var body=document.getElementById("tagcloud-wrap");
+    var tog=document.getElementById("tc-tog");
+    if(!body) return;
+    var open=body.classList.contains("open");
+    body.classList.toggle("open",!open);
+    if(tog) tog.classList.toggle("open",!open);
+  });
+  document.getElementById("search-input")?.addEventListener("input",e=>{
+    S.search=e.target.value;S.page=1;updateRecordList();
+  });
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click",()=>{S.tab=btn.dataset.tab;updateTabBtns();updateRightPanel();});
+  });
+  document.getElementById("pager-prev")?.addEventListener("click",()=>{S.page=Math.max(1,S.page-1);updateRecordList();});
+  document.getElementById("pager-next")?.addEventListener("click",()=>{
+    const tp=Math.ceil(filteredTracks().length/PAGE);S.page=Math.min(tp,S.page+1);updateRecordList();
+  });
+  document.getElementById("engine1-btn")?.addEventListener("click",()=>{
+    const pool=filteredTracks().filter(t=>t.key&&t.bpm);
+    const src=pool.length?pool:allTracks().filter(t=>t.key&&t.bpm);
+    if(!src.length){alert("No tracks with harmonic data found.");return;}
+    const anyFilter=S.roleFilters.size>0||S.genreFilters.size>0||S.styleFilters.size>0||S.decadeFilters.size>0;
+    const size=Math.min(anyFilter?30:20,src.length);
+    const set=engine1BuildSet(src,size);
+    if(!set.length){alert("Could not build a set. Try fewer filters.");return;}
+    S.djSet=set;S.tab="set";updateTabBtns();updateRightPanel();updateRecordList();
+    document.querySelector(".right-panel .scroll")?.scrollTo(0,0);
+  });
+  document.getElementById("engine2-btn")?.addEventListener("click",()=>{
+    if(S.djSet.length<2){alert("Add at least 2 tracks first.");return;}
+    S.djSet=engine2SortSet(S.djSet);updateSetPanel();updateTabBtns();
+  });
+  if(!globalClickAttached){
+    document.addEventListener("click",handleGlobalClick);
+    globalClickAttached=true;
+  }
+}
+
+function handleGlobalClick(e){
+  // Role filter clear
+  if(e.target.closest("[data-rc-clear]")){S.roleFilters=new Set();S.page=1;updateChips();updateRecordList();return;}
+  // Role filter chip
+  const rc=e.target.closest("[data-rc]");
+  if(rc&&!rc.hasAttribute("data-rc-clear")){
+    const id=rc.dataset.rc;const nf=new Set(S.roleFilters);nf.has(id)?nf.delete(id):nf.add(id);
+    S.roleFilters=nf;S.page=1;updateChips();updateRecordList();return;
+  }
+  // Genre filter clear
+  if(e.target.closest("[data-gc-clear]")){S.genreFilters=new Set();S.page=1;updateChips();updateRecordList();return;}
+  // Genre filter chip
+  const gc=e.target.closest("[data-gc]");
+  if(gc&&!gc.hasAttribute("data-gc-clear")){
+    const g=gc.dataset.gc;const nf=new Set(S.genreFilters);nf.has(g)?nf.delete(g):nf.add(g);
+    S.genreFilters=nf;S.page=1;updateChips();updateRecordList();return;
+  }
+  // Style filter clear
+  if(e.target.closest("[data-sc-clear]")){S.styleFilters=new Set();S.page=1;updateChips();updateRecordList();return;}
+  // Style filter chip
+  const sc=e.target.closest("[data-sc]");
+  if(sc&&!sc.hasAttribute("data-sc-clear")){
+    const s=sc.dataset.sc;const nf=new Set(S.styleFilters);nf.has(s)?nf.delete(s):nf.add(s);
+    S.styleFilters=nf;S.page=1;updateChips();updateRecordList();return;
+  }
+  // Decade filter clear
+  if(e.target.closest("[data-dc-clear]")){S.decadeFilters=new Set();S.page=1;updateChips();updateRecordList();return;}
+  // Decade filter chip
+  const dc=e.target.closest("[data-dc]");
+  if(dc&&!dc.hasAttribute("data-dc-clear")){
+    const d=dc.dataset.dc;const nf=new Set(S.decadeFilters);nf.has(d)?nf.delete(d):nf.add(d);
+    S.decadeFilters=nf;S.page=1;updateChips();updateRecordList();return;
+  }
+  // Role override per-track button
+  const rs=e.target.closest("[data-rs]");
+  if(rs){
+    const[tid,role]=rs.dataset.rs.split("|");
+    const track=allTracks().find(t=>t.id===tid);
+    if(track){
+      track.roleOverride=(track.roleOverride===role)?null:role;
+      updateRecordList();
+      const si=S.djSet.findIndex(t=>t.id===tid);
+      if(si>=0){S.djSet[si].roleOverride=track.roleOverride;updateRightPanel();}
+    }
+    return;
+  }
+  // Add/remove from set
+  const ta=e.target.closest(".tr-addbtn[data-tid]");
+  if(ta){
+    const tid=ta.dataset.tid,track=allTracks().find(t=>t.id===tid);
+    if(track){
+      if(inSet(tid)) S.djSet=S.djSet.filter(t=>t.id!==tid);
+      else S.djSet=[...S.djSet,track];
+      updateRecordList();updateTabBtns();updateRightPanel();
+    }
+    return;
+  }
+  // Remove from set
+  const rb=e.target.closest(".rmb[data-tid]");
+  if(rb){S.djSet=S.djSet.filter(t=>t.id!==rb.dataset.tid);updateRecordList();updateTabBtns();updateRightPanel();return;}
+  // Move up/down
+  const mv=e.target.closest(".mv-btn[data-mv]");
+  if(mv){
+    const idx=parseInt(mv.dataset.idx);const arr=[...S.djSet];
+    if(mv.dataset.mv==="up"&&idx>0)[arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
+    else if(mv.dataset.mv==="dn"&&idx<arr.length-1)[arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
+    S.djSet=arr;updateSetPanel();updateTabBtns();return;
+  }
+  // Clear set
+  if(e.target.id==="clear-btn"){S.djSet=[];updateRecordList();updateTabBtns();updateRightPanel();}
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════
+(async()=>{
+  // 1. Handle OAuth callback (?access_token=X&username=Y)
+  const params=new URLSearchParams(window.location.search);
+  if(params.has("access_token")){
+    const tok=params.get("access_token")||"";
+    const usr=params.get("username")||"";
+    try{ await dbSave("discogs_auth",{token:tok,username:usr}); }catch(e){}
+    history.replaceState({},"","/");
+    S.token=tok; S.username=usr;
+  } else {
+    // 2. Load stored OAuth token
+    try{
+      const auth=await dbLoad("discogs_auth");
+      if(auth&&auth.token){ S.token=auth.token; S.username=auth.username||""; }
+    }catch(e){}
+  }
+
+  // 3. Load cached collection
+  try{
+    const cached=await dbLoad("collection_data");
+    if(cached&&cached.releases&&cached.releases.length){
+      S.idbSavedAt=cached.savedAt;
+      S.releases=cached.releases;
+      if(!S.username) S.username=cached.username||"";
+      const {genres,styles,decades}=collectMeta(cached.releases);
+      S.allGenres=genres; S.allStyles=styles; S.allDecades=decades;
+    }
+  }catch(e){}
+
+  // 4. Load saved DJ set
+  try{
+    const savedSet=await dbLoad("dj_set");
+    if(savedSet&&Array.isArray(savedSet)&&savedSet.length) S.djSet=savedSet;
+  }catch(e){}
+
+  renderFull();
+})();
+
+
+</script>
+</body>
+</html>
