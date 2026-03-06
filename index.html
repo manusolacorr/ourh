@@ -1383,6 +1383,25 @@ function updateTabBtns(){
     btn.classList.toggle("on",btn.dataset.tab===S.tab);
     if(btn.dataset.tab==="set") btn.textContent="Tracklist ("+S.djSet.length+")";
   });
+  // Keep set-ph header count + buttons in sync
+  const setPh=document.querySelector(".set-ph");
+  if(setPh){
+    const title=setPh.querySelector(".ptitle");
+    if(title) title.textContent="Set ("+S.djSet.length+")";
+    let btnWrap=setPh.querySelector(".set-ph-btns");
+    if(!btnWrap){
+      btnWrap=document.createElement("div");
+      btnWrap.className="set-ph-btns";
+      btnWrap.style.cssText="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap";
+      setPh.appendChild(btnWrap);
+    }
+    if(S.djSet.length){
+      btnWrap.innerHTML='<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem">↓ XLS</button>'
+        +'<button class="btn sec sm" id="clear-btn">Clear</button>';
+    } else {
+      btnWrap.innerHTML='<button class="set-engine-btn" id="engine2-btn">✶ Smart Sort</button>';
+    }
+  }
 }
 function updateRightPanel(){
   if(S.tab==="set")          updateSetPanel();
