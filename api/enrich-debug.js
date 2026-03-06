@@ -1,6 +1,13 @@
 // api/enrich-debug.js — returns raw fetch results for debugging
 // Call: GET /api/enrich-debug?source=tunebat&artist=Frits+Wentink&title=Horses+In+Cornfield
 
+const BP_KEY = {
+  1:'8B',  2:'3B',  3:'10B', 4:'5B',  5:'12B', 6:'7B',
+  7:'2B',  8:'9B',  9:'4B',  10:'11B',11:'6B', 12:'1B',
+  13:'5A', 14:'12A',15:'7A', 16:'2A', 17:'9A', 18:'4A',
+  19:'11A',20:'6A', 21:'1A', 22:'8A', 23:'3A', 24:'10A',
+};
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -47,13 +54,11 @@ module.exports = async function handler(req, res) {
         html_length: text.length,
         tracks_found: tracks.length,
         first_hit: firstHit ? {
-          name: firstHit.name || firstHit.title,
+          name: firstHit.track_name || firstHit.name || firstHit.title,
           bpm: firstHit.bpm,
-          key: firstHit.key,
-          camelot_key: firstHit.camelot_key,
           chord_type_id: firstHit.chord_type_id,
-          genre: firstHit.genre,
-          sub_genre: firstHit.sub_genre,
+          resolved_key: BP_KEY[firstHit.chord_type_id] || null,
+          genre: (firstHit.genre||[]).map(g=>g.genre_name||g.name),
         } : null,
       });
     }
