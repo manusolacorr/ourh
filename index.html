@@ -8,16 +8,48 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* ── LIGHT MODE (default) ──────────────────────────────────────────── */
 :root{
-  /* Linear dark palette */
-  --bg:#0F0F11;--surface:#17171A;--surface2:#1F1F23;--surface3:#28282E;
-  --border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.12);
+  --bg:#F7F8F9;--surface:#FFFFFF;--surface2:#F0F1F3;--surface3:#E8E9EC;
+  --border:#E2E2E5;--border-strong:#C8C8CE;
+  --text:#0D0D0D;--muted:#717179;--muted2:#9A9AA5;
+  --accent:#5E6AD2;--accent2:#7C3AED;
+  --accent-primary:#5E6AD2;
+  --red:#DC2626;--green:#16A34A;--orange:#D97706;
+  --warmup:#2563EB;--midset:#B45309;--peak:#DC2626;--afterhours:#7C3AED;
+  --shadow-btn:0 1px 2px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.06),0 0 0 1px var(--border);
+  --shadow-focus:0 0 0 2px #FFFFFF,0 0 0 4px #5E6AD2;
+  --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+/* ── DARK MODE ─────────────────────────────────────────────────────── */
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0B0B0B;--surface:#121212;--surface2:#1A1A1A;--surface3:#242424;
+    --border:#222222;--border-strong:rgba(255,255,255,0.12);
+    --text:#F0F0F2;--muted:#62626B;--muted2:#A0A0AB;
+    --accent:#5E6AD2;--accent2:#8B5CF6;
+    --accent-primary:#5E6AD2;
+    --red:#E55353;--green:#26B05A;--orange:#E5A020;
+    --warmup:#3B82F6;--midset:#D97706;--peak:#EF4444;--afterhours:#8B5CF6;
+    --shadow-btn:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06) inset;
+    --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px var(--border);
+    --shadow-focus:0 0 0 2px #0B0B0B,0 0 0 4px #5E6AD2;
+  }
+}
+
+/* Keep dark forced for this app (DJ tool — dark is always right) */
+:root{
+  --bg:#0B0B0B;--surface:#121212;--surface2:#1A1A1A;--surface3:#242424;
+  --border:#222222;--border-strong:rgba(255,255,255,0.12);
   --text:#F0F0F2;--muted:#62626B;--muted2:#A0A0AB;
   --accent:#5E6AD2;--accent2:#8B5CF6;
+  --accent-primary:#5E6AD2;
   --red:#E55353;--green:#26B05A;--orange:#E5A020;
   --warmup:#3B82F6;--midset:#D97706;--peak:#EF4444;--afterhours:#8B5CF6;
   --shadow-btn:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06) inset;
-  --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.05);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px var(--border);
   --shadow-focus:0 0 0 2px #0F0F11,0 0 0 4px #5E6AD2;
   --ease:cubic-bezier(0.25,0.46,0.45,0.94);
 }
@@ -238,8 +270,95 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 }
 
 .ds-font{font-family:'Inter',system-ui,sans-serif;font-weight:600;}
+
+/* ── .linear-card — non-destructive surface class ──────────────────── */
+/* Apply to any container. Touches only color, border, shadow, radius.  */
+/* Does not change display, position, width, height, flex, or grid.     */
+.linear-card{
+  background-color: var(--surface);
+  border:           1px solid var(--border);
+  border-radius:    8px;
+  box-shadow:       var(--shadow-card);
+  color:            var(--text);
+  transition:
+    border-color  120ms var(--ease),
+    box-shadow    120ms var(--ease),
+    background    120ms var(--ease);
+}
+
+/* Light mode hover — subtle lift */
+.linear-card:hover{
+  border-color: var(--border-strong);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.08),
+    0 8px 24px rgba(0,0,0,0.07),
+    0 0 0 1px var(--border-strong);
+}
+
+/* Dark mode hover — border glow using accent color */
+@media(prefers-color-scheme:dark){
+  .linear-card:hover{
+    border-color: rgba(94,106,210,0.4);
+    box-shadow:
+      0 0 0 1px rgba(94,106,210,0.25),
+      0 4px 16px rgba(0,0,0,0.4),
+      0 1px 3px rgba(0,0,0,0.3);
+  }
+}
+
+/* Since we force dark always, also apply dark glow directly */
+.linear-card:hover{
+  border-color: rgba(94,106,210,0.35);
+  box-shadow:
+    0 0 0 1px rgba(94,106,210,0.2),
+    0 4px 16px rgba(0,0,0,0.4),
+    0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Elevated variant — for modals/popovers */
+.linear-card.elevated{
+  background-color: var(--surface2);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.4),
+    0 0 0 1px var(--border);
+}
+
+/* Inset/tinted variant — for info blocks, suggestions */
+.linear-card.inset{
+  background-color: var(--surface2);
+  border-color:     var(--border);
+  box-shadow:       none;
+}
+
+/* ── Lucide icon base styles ────────────────────────────────────────── */
+/* Icons inherit color from parent — set color to control them         */
+[data-lucide]{
+  display:      inline-block;
+  width:        1em;
+  height:       1em;
+  stroke:       currentColor;
+  stroke-width: 1.75;
+  fill:         none;
+  vertical-align: middle;
+  flex-shrink:  0;
+}
+
+/* Accent-colored icons */
+.icon-accent [data-lucide],
+[data-lucide].accent { color: var(--accent-primary); }
+
+/* Muted icons */
+.icon-muted [data-lucide],
+[data-lucide].muted  { color: var(--muted); }
+
+/* Size helpers */
+[data-lucide].sm { width: 0.75rem; height: 0.75rem; }
+[data-lucide].md { width: 1rem;    height: 1rem; }
+[data-lucide].lg { width: 1.25rem; height: 1.25rem; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -1038,15 +1157,15 @@ function updateEnrichBar(){
   const btn=document.getElementById("enrich-btn");
   if(enrichStats.running){
     if(stats) stats.textContent=`Enriching… ${enrichStats.done}/${enrichStats.total} · ${enrichStats.enriched} matched`;
-    if(btn){btn.textContent="⏳ Enriching…";btn.disabled=true;}
+    if(btn){btn.textContent="Enriching…";btn.disabled=true;}
     updateIdbBar();
   } else if(enrichStats.total>0){
     if(stats) stats.textContent=`${enrichStats.enriched}/${enrichStats.total} enriched`;
-    if(btn){btn.textContent="⚡ Enrich BPM/Key";btn.disabled=false;}
+    if(btn){btn.textContent="Enrich BPM/Key";btn.disabled=false;}
     updateIdbBar();
   } else {
     if(stats) stats.textContent="";
-    if(btn){btn.textContent="⚡ Enrich BPM/Key";btn.disabled=false;}
+    if(btn){btn.textContent="Enrich BPM/Key";btn.disabled=false;}
     updateIdbBar();
   }
 }
@@ -1488,10 +1607,11 @@ function updateTabBtns(){
       setPh.appendChild(btnWrap);
     }
     if(S.djSet.length){
-      btnWrap.innerHTML='<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem">↓ XLS</button>'
-        +'<button class="btn sec sm" id="clear-btn">Clear</button>';
+      btnWrap.innerHTML='<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button>'
+        +'<button class="btn sec sm" id="clear-btn"><i data-lucide="x" class="sm"></i> Clear</button>';
     } else {
-      btnWrap.innerHTML='<button class="set-engine-btn" id="engine2-btn">✶ Smart Sort</button>';
+      btnWrap.innerHTML='<button class="set-engine-btn" id="engine2-btn"><i data-lucide="sparkles" class="sm"></i> Smart Sort</button>';
+    if(typeof lucide!=='undefined') lucide.createIcons();
     }
   }
 }
@@ -1937,6 +2057,7 @@ function renderFull(){
     attachConnectEvents();
   } else {
     app.innerHTML=renderMainHTML();
+  setTimeout(()=>{ if(typeof lucide!=='undefined') lucide.createIcons(); },0);
     attachMainEvents();
     updateRecordList();
     updateRightPanel();
@@ -1970,7 +2091,7 @@ function renderConnectHTML(){
           +'<div style="font-size:0.62rem;color:var(--accent);font-weight:700;margin-bottom:0.05rem">Login with Discogs</div>'
           +'<div style="font-size:0.52rem;color:var(--muted);line-height:1.6">One click · secure OAuth · no token pasting needed.</div>'
         +'</div>'
-        +'<button class="btn" id="oauth-btn" style="flex-shrink:0;font-size:0.58rem;padding:0.28rem 0.8rem">Connect →</button>'
+        +'<button class="btn" id="oauth-btn" style="flex-shrink:0;font-size:0.58rem;padding:0.28rem 0.8rem"><i data-lucide="arrow-right" class="sm"></i> Connect</button>'
       +'</div>'
       +'<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:7px;padding:0.6rem 0.8rem;margin-bottom:0.85rem;display:flex;align-items:center;gap:0.6rem">'
         +'<span style="font-size:1.1rem;flex-shrink:0">🎛️</span>'
@@ -1996,16 +2117,16 @@ function renderMainHTML(){
       +'</p>'
     +'</div>'
     +'<div class="hdr-right"><div class="dot"></div><span style="color:var(--green)">Loaded</span>'
-      +'<button class="btn sec sm" id="sync-btn" style="font-size:0.54rem">⟳ Sync</button>'
-      +'<button class="btn sec sm" id="reset-btn">↩ Reset</button>'      +(S.token?'<button class="btn sec sm" id="logout-btn" style="font-size:0.54rem">⏏ Logout</button>':"")
+      +'<button class="btn sec sm" id="sync-btn" style="font-size:0.54rem"><i data-lucide="refresh-cw" class="sm"></i> Sync</button>'
+      +'<button class="btn sec sm" id="reset-btn"><i data-lucide="rotate-ccw" class="sm"></i> Reset</button>'      +(S.token?'<button class="btn sec sm" id="logout-btn" style="font-size:0.54rem"><i data-lucide="log-out" class="sm"></i> Logout</button>':"")
     +'</div>'
   +'</header>'
   +'<div class="prog-bar"></div>'
   +(S.error?'<div class="err-bar">⚠ '+esc(S.error)+'</div>':"")
-  +'<div id="idb-bar" class="idb-bar">'  +'<div class="idb-dot"></div>'  +'<span class="idb-txt">—</span>'  +'<span style="flex:1"></span>'  +'<span id="enrich-stats" style="font-size:0.52rem;color:var(--muted)"></span>'  +'<button class="btn sm" id="enrich-btn" style="margin-left:0.5rem;font-size:0.54rem;padding:0.14rem 0.55rem;background:rgba(139,92,246,0.08);color:var(--accent2);border:1px solid rgba(139,92,246,0.25)">⚡ Enrich BPM/Key</button>'+'</div>'
+  +'<div id="idb-bar" class="idb-bar">'  +'<div class="idb-dot"></div>'  +'<span class="idb-txt">—</span>'  +'<span style="flex:1"></span>'  +'<span id="enrich-stats" style="font-size:0.52rem;color:var(--muted)"></span>'  +'<button class="btn sm" id="enrich-btn" style="margin-left:0.5rem;font-size:0.54rem;padding:0.14rem 0.55rem;background:rgba(139,92,246,0.08);color:var(--accent2);border:1px solid rgba(139,92,246,0.25)"><i data-lucide="zap" class="sm"></i> Enrich BPM/Key</button>'+'</div>'
   +'<div class="main">'
     +'<div class="left-panel">'
-      +'<div class="ph"><span class="ptitle">Library</span><span class="badge" id="col-badge">—</span><button class="btn sec sm" id="export-lib-btn" style="margin-left:auto;font-size:0.52rem;padding:0.14rem 0.55rem">↓ XLS</button></div>'
+      +'<div class="ph"><span class="ptitle">Library</span><span class="badge" id="col-badge">—</span><button class="btn sec sm" id="export-lib-btn" style="margin-left:auto;font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button></div>'
       +'<div class="engine-bar">'
         +'<button class="engine-btn" id="engine1-btn">'
           +'<span class="eb-icon">🧠</span>'
@@ -2031,8 +2152,8 @@ function renderMainHTML(){
         +'<span class="ptitle">Set ('+S.djSet.length+')</span>'
         +'<div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap">'
           +'<button class="set-engine-btn" id="engine2-btn">✦ Smart Sort</button>'
-          +(S.djSet.length?'<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem">↓ XLS</button>':"")
-          +(S.djSet.length?'<button class="btn sec sm" id="clear-btn">Clear</button>':"")
+          +(S.djSet.length?'<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button>':"")
+          +(S.djSet.length?'<button class="btn sec sm" id="clear-btn"><i data-lucide="x" class="sm"></i> Clear</button>':"")
         +'</div>'
       +'</div>'
       +'<div class="tabs">'
@@ -2310,6 +2431,8 @@ function handleGlobalClick(e){
   }catch(e){}
 
   renderFull();
+  // Init Lucide icons
+  if(typeof lucide !== 'undefined') lucide.createIcons();
 })();
 
 
