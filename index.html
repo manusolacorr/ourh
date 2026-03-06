@@ -877,7 +877,8 @@ async function loadCollection(){
             releaseArtist:relArtist,
             thumb:info.thumb||null,
             year:info.year||0,
-            label:(info.labels||[]).map(l=>l.name).join(", ")||""
+            label:(info.labels||[]).map(l=>l.name).join(", ")||"",
+            discogsNotes:(t.notes||"")+" "+(releaseData.notes||"")
           };
         });
       }catch(e){
@@ -1016,6 +1017,12 @@ async function enrichTrack(track){
   const needsKey = track.keySource!=="enriched";
   if(!needsBpm&&!needsKey) return;
 
+  // ── SOURCE 0: Discogs notes (free — already in our data) ─────────────
+  const discogsResult = parseDiscogsNotes(track.discogsNotes||"");
+  if(discogsResult && applyResult(discogsResult)){
+    if(track.bpmSource==="enriched"&&track.keySource==="enriched"){ enrichStats.enriched++; return; }
+  }
+
   // ── SOURCE 1: Tunebat (best for BPM+Key) ─────────────────────────────
   try{
     const r=await tunebatSearch(`${artist} ${title}`);
@@ -1054,6 +1061,66 @@ async function enrichTrack(track){
   }catch(e){}
 
   if(track.bpmSource==="enriched"||track.keySource==="enriched") enrichStats.enriched++;
+}
+
+// ── Discogs notes parser ─────────────────────────────────────────────────
+function parseDiscogsNotes(notes){
+  if(!notes||!notes.trim()) return null;
+  const n=notes;
+  let bpm=null, key=null;
+
+  // BPM patterns: "122 BPM", "BPM: 122", "BPM 122", "Tempo: 122", "@ 122bpm", "122bpm"
+  const bpmPatterns=[
+    /\b(\d{2,3}(?:\.\d)?)\s*bpm\b/i,
+    /\bbpm[:\s]+?(\d{2,3}(?:\.\d)?)/i,
+    /\btempo[:\s]+?(\d{2,3}(?:\.\d)?)/i,
+    /\b@\s*(\d{2,3}(?:\.\d)?)\b/,
+    /\b(\d{2,3}(?:\.\d)?)\s*beats?\s*per\s*min/i,
+  ];
+  for(const re of bpmPatterns){
+    const m=n.match(re);
+    if(m){ const v=parseFloat(m[1]); if(v>=50&&v<=210){ bpm=Math.round(v); break; } }
+  }
+
+  // Key patterns — try Camelot first, then musical notation
+  // Camelot: "8A", "11B", "1A" etc.
+  const camMatch=n.match(/\b(1[0-2]|[1-9])[AB]\b/);
+  if(camMatch && CAM[camMatch[0]]) key=camMatch[0];
+
+  // Open Key: "6m", "4d" — convert to Camelot
+  if(!key){
+    const okMatch=n.match(/\b(1[0-2]|[1-9])(m|d)\b/);
+    if(okMatch){
+      // Open Key to Camelot: m→A, d→B, number same
+      key=okMatch[1]+(okMatch[2]==="m"?"A":"B");
+      if(!CAM[key]) key=null;
+    }
+  }
+
+  // Musical key notation: "Am", "F# minor", "Bb major", "C minor", "G#m" etc.
+  if(!key){
+    const noteNames={
+      "C":["1B"],"C#":["8B"],"Db":["8B"],"D":["3B"],"D#":["10B"],"Eb":["10B"],
+      "E":["5B"],"F":["12B"],"F#":["7B"],"Gb":["7B"],"G":["2B"],"G#":["9B"],
+      "Ab":["9B"],"A":["4B"],"A#":["11B"],"Bb":["11B"],"B":["6B"],
+      // Minor equivalents
+      "Cm":["5A"],"C#m":["12A"],"Dbm":["12A"],"Dm":["7A"],"D#m":["2A"],"Ebm":["2A"],
+      "Em":["9A"],"Fm":["4A"],"F#m":["11A"],"Gbm":["11A"],"Gm":["6A"],"G#m":["1A"],
+      "Abm":["1A"],"Am":["8A"],"A#m":["3A"],"Bbm":["3A"],"Bm":["10A"]
+    };
+    // Try "X minor" / "X major" / "Xm" / "X maj" / "X min"
+    const keyRe=/\b(C#|Db|D#|Eb|F#|Gb|G#|Ab|A#|Bb|[A-G])(m|#m)?\s*(?:(minor|maj(?:or)?|min))?\b/g;
+    let km;
+    while((km=keyRe.exec(n))!==null){
+      const root=km[1];
+      const isMinor=km[2]==="m"||km[2]==="#m"||(km[3]&&km[3].startsWith("min"));
+      const lookup=isMinor?(root+"m"):root;
+      if(noteNames[lookup]){ key=noteNames[lookup][0]; break; }
+    }
+  }
+
+  if(!bpm&&!key) return null;
+  return {bpm,key};
 }
 
 // ── Tunebat ───────────────────────────────────────────────────────────────
