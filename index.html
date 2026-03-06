@@ -958,6 +958,46 @@ function updateEnrichBar(){
   }
 }
 
+
+// ── Enrichment Diagnostics ────────────────────────────────────────────────
+async function runEnrichDiagnostics(){
+  const track = allTracks().find(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
+  if(!track){ alert("All tracks already enriched!"); return; }
+
+  const modal = document.getElementById("diag-modal");
+  const results = document.getElementById("diag-results");
+  const trackEl = document.getElementById("diag-track");
+  modal.style.display = "flex";
+  results.innerHTML = "";
+  const artist = track.trackArtist || track.releaseArtist || "";
+  const title = track.title || "";
+  trackEl.textContent = `Testing: "${artist} — ${title}"`;
+
+  async function row(label, fn){
+    const el = document.createElement("div");
+    el.style.cssText = "padding:0.4rem 0.6rem;border-radius:5px;background:rgba(255,255,255,0.04);display:flex;gap:0.5rem;align-items:flex-start";
+    el.innerHTML = `<span style="color:#888;min-width:90px">${label}</span><span style="color:#aaa">⏳ testing…</span>`;
+    results.appendChild(el);
+    const t0 = Date.now();
+    try{
+      const res = await fn();
+      const ms = Date.now()-t0;
+      const ok = res && (res.bpm || res.key);
+      el.querySelector("span:last-child").innerHTML = ok
+        ? `<span style="color:#4caf50">✓ BPM:${res.bpm||"—"} Key:${res.key||"—"} (${ms}ms)</span>`
+        : `<span style="color:#f44">✗ no data (${ms}ms)</span>`;
+    }catch(e){
+      el.querySelector("span:last-child").innerHTML = `<span style="color:#f44">✗ error: ${e.message}</span>`;
+    }
+  }
+
+  await row("Discogs notes", async()=> parseDiscogsNotes(track.discogsNotes||""));
+  await row("Tunebat", async()=> tunebatSearch(`${artist} ${title}`));
+  await row("Beatport", async()=> beatportSearch(artist, title));
+  await row("Juno", async()=> junoSearch(artist, title, track.releaseTitle||""));
+  await row("Last.fm", async()=> lastfmTrack(artist, title));
+}
+
 async function enrichCollection(releases){
   const allT=releases.flatMap(r=>r.tracks);
   enrichStats={done:0,enriched:0,total:allT.length,running:true};
@@ -1020,28 +1060,32 @@ async function enrichTrack(track){
   // ── SOURCE 0: Discogs notes (free — already in our data) ─────────────
   const discogsResult = parseDiscogsNotes(track.discogsNotes||"");
   if(discogsResult && applyResult(discogsResult)){
+    console.log(`[enrich] DISCOGS NOTES hit: ${artist} - ${title}`, discogsResult);
     if(track.bpmSource==="enriched"&&track.keySource==="enriched"){ enrichStats.enriched++; return; }
   }
 
   // ── SOURCE 1: Tunebat (best for BPM+Key) ─────────────────────────────
   try{
     const r=await tunebatSearch(`${artist} ${title}`);
+    console.log(`[enrich] TUNEBAT ${artist} - ${title}:`, r);
     if(r&&applyResult(r)&&!needsBpm&&!needsKey){ enrichStats.enriched++; return; }
-  }catch(e){}
+  }catch(e){ console.warn("[enrich] tunebat error:", e); }
   await sleep(80);
 
   // ── SOURCE 2: Beatport public search ─────────────────────────────────
   try{
     const r=await beatportSearch(artist, title);
+    console.log(`[enrich] BEATPORT ${artist} - ${title}:`, r);
     if(r&&applyResult(r)&&track.bpmSource==="enriched"&&track.keySource==="enriched"){ enrichStats.enriched++; return; }
-  }catch(e){}
+  }catch(e){ console.warn("[enrich] beatport error:", e); }
   await sleep(80);
 
   // ── SOURCE 3: Juno Download ───────────────────────────────────────────
   try{
     const r=await junoSearch(artist, title, relTitle);
+    console.log(`[enrich] JUNO ${artist} - ${title}:`, r);
     if(r&&applyResult(r)&&track.bpmSource==="enriched"){ enrichStats.enriched++; return; }
-  }catch(e){}
+  }catch(e){ console.warn("[enrich] juno error:", e); }
   await sleep(80);
 
   // ── SOURCE 4: Last.fm track.getInfo (genre tags) ──────────────────────
@@ -1051,14 +1095,8 @@ async function enrichTrack(track){
   }catch(e){}
   await sleep(80);
 
-  // ── SOURCE 5: MusicBrainz + AcousticBrainz ───────────────────────────
-  try{
-    const mbid=await mbSearch(artist, title);
-    if(mbid){
-      const ab=await abGet(mbid);
-      if(ab&&applyResult(ab)) enrichStats.enriched++;
-    }
-  }catch(e){}
+  // ── SOURCE 5: MusicBrainz (genre tags only — AcousticBrainz is dead) ──
+  // AcousticBrainz shut down in 2022; MusicBrainz itself has no BPM/key data
 
   if(track.bpmSource==="enriched"||track.keySource==="enriched") enrichStats.enriched++;
 }
@@ -1975,12 +2013,21 @@ function doCSVLoad(file){
 
 let globalClickAttached=false;
 function attachMainEvents(){
-  document.getElementById("enrich-btn")?.addEventListener("click",()=>{
-    if(enrichStats.running) return;
-    const toEnrich=allTracks().filter(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
-    if(!toEnrich.length){alert("All tracks already enriched!");return;}
-    enrichCollection(S.releases);
-  });
+  (()=>{
+    const btn = document.getElementById("enrich-btn");
+    if(!btn) return;
+    let pressTimer;
+    btn.addEventListener("mousedown", ()=>{ pressTimer=setTimeout(()=>runEnrichDiagnostics(), 600); });
+    btn.addEventListener("mouseup", ()=>clearTimeout(pressTimer));
+    btn.addEventListener("mouseleave", ()=>clearTimeout(pressTimer));
+    btn.addEventListener("click",()=>{
+      if(enrichStats.running) return;
+      const toEnrich=allTracks().filter(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
+      if(!toEnrich.length){alert("All tracks already enriched!");return;}
+      enrichCollection(S.releases);
+    });
+    btn.title = "Click to enrich · Hold 600ms to diagnose";
+  })();
   document.getElementById("logout-btn")?.addEventListener("click",async()=>{
     try{ await dbDelete("discogs_auth"); await dbDelete("collection_data"); await dbDelete("dj_set"); }catch(e){}
     location.reload();
@@ -2149,5 +2196,18 @@ function handleGlobalClick(e){
 
 
 </script>
+
+<!-- ── Enrichment Diagnostics Modal ─────────────────────────────────── -->
+<div id="diag-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:1.5rem;max-width:520px;width:92%;max-height:80vh;overflow-y:auto;font-family:monospace;font-size:0.78rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <strong style="color:#e0e0ff;font-size:0.9rem">⚡ Enrichment Diagnostics</strong>
+      <button onclick="document.getElementById('diag-modal').style.display='none'" style="background:none;border:none;color:#888;cursor:pointer;font-size:1.2rem">✕</button>
+    </div>
+    <div id="diag-track" style="color:#888;margin-bottom:0.75rem;font-size:0.72rem"></div>
+    <div id="diag-results" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    <div style="margin-top:1rem;color:#666;font-size:0.68rem">Testing first unenriched track against all sources</div>
+  </div>
+</div>
 </body>
 </html>

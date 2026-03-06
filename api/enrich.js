@@ -33,7 +33,8 @@ module.exports = async function handler(req, res) {
     }
     return res.status(400).json({ error: `Unknown source: ${source}` });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(`[enrich] ${source} error:`, err.message);
+    return res.status(500).json({ error: err.message, source });
   }
 };
 
@@ -88,12 +89,18 @@ async function tunebat(artist, title) {
   const query = `${artist} ${title}`.trim();
   const url = `https://tunebat.com/api/search?q=${encodeURIComponent(query)}&limit=1`;
   const r = await fetch(url, { headers: { 'Accept': 'application/json', ...HEADERS_HTML } });
+  console.log('[tunebat] status:', r.status, 'url:', url);
   if (!r.ok) return null;
   const j = await r.json();
-  const hit = (j.data || j.results || j.items || [])[0];
-  if (!hit) return null;
+  const items = j.data || j.results || j.items || [];
+  const hit = items[0];
+  if (!hit) {
+    console.log('[tunebat] no hit, keys in response:', Object.keys(j));
+    return null;
+  }
   const bpm = hit.bpm || hit.Bpm || hit.tempo || null;
   const key = hit.camelot || hit.key || hit.Key || null;
+  console.log('[tunebat] hit keys:', Object.keys(hit), '| bpm:', bpm, '| key:', key);
   if (!bpm && !key) return null;
   return { bpm: bpm ? Math.round(bpm) : null, key: normalizeCamelot(key) };
 }
@@ -103,8 +110,10 @@ async function beatport(artist, title) {
   const q = encodeURIComponent(`${artist} ${title}`);
   const url = `https://www.beatport.com/search/tracks?q=${q}`;
   const r = await fetch(url, { headers: HEADERS_HTML });
+  console.log('[beatport] status:', r.status);
   if (!r.ok) return null;
   const html = await r.text();
+  console.log('[beatport] html length:', html.length, 'has __NEXT_DATA__:', html.includes('__NEXT_DATA__'));
 
   const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (!m) return null;
@@ -143,8 +152,10 @@ async function juno(artist, title, relTitle) {
   const q = encodeURIComponent(`${artist} ${title || relTitle}`);
   const url = `https://www.juno.co.uk/search/?q%5Ball%5D%5B%5D=${q}&order=relevance&facets%5BformatDescriptions%5D%5B%5D=12%22+Vinyl`;
   const r = await fetch(url, { headers: HEADERS_HTML });
+  console.log('[juno] status:', r.status);
   if (!r.ok) return null;
   const html = await r.text();
+  console.log('[juno] html length:', html.length, 'has BPM:', /\d{2,3}\s*bpm/i.test(html));
 
   const bpmMatch =
     html.match(/class="bpm[^"]*"[^>]*>[\s\S]*?(\d{2,3}(?:\.\d)?)\s*BPM/i) ||
