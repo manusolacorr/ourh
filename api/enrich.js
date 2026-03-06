@@ -54,6 +54,14 @@ const CAMELOT = {
   '7B':'7B','8B':'8B','9B':'9B','10B':'10B','11B':'11B','12B':'12B',
 };
 
+// Beatport chord_type_id → Camelot
+const BP_KEY = {
+  1:'8B',  2:'3B',  3:'10B', 4:'5B',  5:'12B', 6:'7B',
+  7:'2B',  8:'9B',  9:'4B',  10:'11B',11:'6B', 12:'1B',
+  13:'5A', 14:'12A',15:'7A', 16:'2A', 17:'9A', 18:'4A',
+  19:'11A',20:'6A', 21:'1A', 22:'8A', 23:'3A', 24:'10A',
+};
+
 function normalizeCamelot(raw) {
   if (!raw) return null;
   const s = String(raw).trim().toUpperCase().replace(/\s+/g, '');
@@ -131,17 +139,18 @@ async function beatport(artist, title) {
   const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
   const target = norm(title);
   const hit = tracks.find(t =>
-    norm(t.name || t.title || '').includes(target) ||
-    target.includes(norm(t.name || t.title || ''))
+    norm(t.track_name || t.name || t.title || '').includes(target) ||
+    target.includes(norm(t.track_name || t.name || t.title || ''))
   ) || tracks[0];
 
   if (!hit) return null;
   const bpm = hit.bpm || hit.tempo || null;
-  // Beatport key: hit.key.camelot_name, or hit.key.name, or chord_type mapped
-  const keyRaw = hit.key?.camelot_name || hit.key?.camelot || hit.key?.name || hit.camelot_key || null;
-  console.log('[beatport] hit bpm:', hit.bpm, 'key obj:', JSON.stringify(hit.key), 'keyRaw:', keyRaw);
-  const genres = hit.genre ? [hit.genre.name] : (hit.genres?.map(g => g.name) || []);
-  const styles = hit.subgenre ? [hit.subgenre.name] : (hit.sub_genres?.map(g => g.name) || []);
+  // Beatport uses chord_type_id (1-24) for key
+  const keyRaw = BP_KEY[hit.chord_type_id] ||
+                 hit.key?.camelot_name || hit.key?.camelot || hit.key?.name || hit.camelot_key || null;
+  // Beatport genre is an array of {genre_id, genre_name}
+  const genres = (hit.genre||[]).map(g => g.genre_name || g.name).filter(Boolean);
+  const styles = (hit.sub_genre||hit.subgenre||[]).map?.(g => g.sub_genre_name || g.name).filter(Boolean) || [];
   return {
     bpm: bpm ? Math.round(bpm) : null,
     key: normalizeCamelot(keyRaw),
