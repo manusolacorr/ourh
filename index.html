@@ -39,8 +39,8 @@
   }
 }
 
-/* Keep dark forced for this app (DJ tool — dark is always right) */
-:root{
+/* Dark default + [data-theme] toggle override */
+:root,[data-theme="dark"]{
   --bg:#0B0B0B;--surface:#121212;--surface2:#1A1A1A;--surface3:#242424;
   --border:#222222;--border-strong:rgba(255,255,255,0.12);
   --text:#F0F0F2;--muted:#62626B;--muted2:#A0A0AB;
@@ -50,7 +50,20 @@
   --warmup:#3B82F6;--midset:#D97706;--peak:#EF4444;--afterhours:#8B5CF6;
   --shadow-btn:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06) inset;
   --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px var(--border);
-  --shadow-focus:0 0 0 2px #0F0F11,0 0 0 4px #5E6AD2;
+  --shadow-focus:0 0 0 2px #0B0B0B,0 0 0 4px #5E6AD2;
+  --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+}
+[data-theme="light"]{
+  --bg:#F7F8F9;--surface:#FFFFFF;--surface2:#F0F1F3;--surface3:#E8E9EC;
+  --border:#E2E2E5;--border-strong:#C8C8CE;
+  --text:#0D0D0D;--muted:#717179;--muted2:#9A9AA5;
+  --accent:#5E6AD2;--accent2:#7C3AED;
+  --accent-primary:#5E6AD2;
+  --red:#DC2626;--green:#16A34A;--orange:#D97706;
+  --warmup:#2563EB;--midset:#B45309;--peak:#DC2626;--afterhours:#7C3AED;
+  --shadow-btn:0 1px 2px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.06),0 0 0 1px var(--border);
+  --shadow-focus:0 0 0 2px #FFFFFF,0 0 0 4px #5E6AD2;
   --ease:cubic-bezier(0.25,0.46,0.45,0.94);
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -85,7 +98,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 #search-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.42rem 0.75rem 0.42rem 2rem;font-family:inherit;font-size:0.69rem;border-radius:5px;outline:none;transition:border-color 120ms var(--ease),box-shadow 120ms var(--ease);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2362626B' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:0.55rem center}
-#search-input:focus{border-color:var(--accent);box-shadow:var(--shadow-focus);background:var(--surface2)}
+#search-input:focus{border-color:var(--accent);box-shadow:var(--shadow-focus);background:var(--surface)}
 #search-input::placeholder{color:var(--muted)}
 .search-hint{font-size:0.55rem;color:var(--muted);margin-top:0.18rem}
 /* TAG CLOUD */
@@ -131,17 +144,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .tl-rname{font-family:'Inter',system-ui,sans-serif;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;letter-spacing:-0.01em}
 .tl-rmeta{font-size:0.51rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.03rem}
 /* TRACK ROW */
-.tr{display:flex;align-items:center;padding:0.26rem 1.1rem 0.26rem 0;border-bottom:1px solid var(--border);background:var(--bg);transition:background 80ms}
+.tr{display:flex;align-items:center;padding:0.26rem 1.1rem 0.26rem 0;border-bottom:1px solid var(--border);background:var(--surface);transition:background 80ms}
 .tr:hover{background:var(--surface)}
 .tr:last-child{border-bottom:none}
-.tr-stripe{width:3px;min-height:36px;flex-shrink:0;border-radius:0 2px 2px 0;margin-right:0.5rem}
+.tr-stripe{width:4px;min-height:36px;flex-shrink:0;border-radius:0 2px 2px 0;margin-right:0.5rem;opacity:0.9}
 .tr-pos{min-width:28px;font-size:0.58rem;font-weight:700;color:var(--accent2);text-align:center;flex-shrink:0;letter-spacing:0.02em}
 .tr-body{flex:1;min-width:0;padding-right:0.4rem}
 .tr-title{font-size:0.69rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em}
 .tr-meta{font-size:0.51rem;color:var(--muted);margin-top:0.1rem;display:flex;flex-wrap:wrap;gap:0.18rem;align-items:center}
 .role-pill{font-size:0.47rem;font-weight:600;color:#fff;padding:0.03rem 0.28rem;border-radius:10px;white-space:nowrap}
 .tag-chip{font-size:0.49rem;padding:0.03rem 0.28rem;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-weight:500;white-space:nowrap}
-.tag-chip.bpm{color:var(--accent);border-color:rgba(94,106,210,0.25);background:rgba(94,106,210,0.08)}
+.tag-chip.bpm{color:var(--accent);border-color:rgba(94,106,210,0.3);background:rgba(94,106,210,0.07)}
 .tag-chip.key{color:var(--accent2);border-color:rgba(139,92,246,0.25);background:rgba(139,92,246,0.08)}
 .tag-chip.enr{font-size:0.39rem;opacity:0.45}
 /* Role override micro-buttons */
@@ -235,7 +248,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .print-btn:hover{border-color:var(--accent);color:var(--accent)}
 /* EMPTY / ERROR */
 .empty{padding:2.5rem 1rem;text-align:center;color:var(--muted)}
-.empty .ei{font-size:2rem;margin-bottom:0.55rem}
+.empty .ei{font-size:2rem;margin-bottom:0.55rem;display:flex;justify-content:center;line-height:1}
 .empty h3{font-family:'Inter',system-ui,sans-serif;font-size:0.95rem;font-weight:600;color:var(--text);margin-bottom:0.28rem;letter-spacing:-0.02em}
 .empty p{font-size:0.59rem;line-height:1.75;color:var(--muted2)}
 .err-bar{background:rgba(229,83,83,0.1);border-bottom:1px solid rgba(229,83,83,0.3);color:var(--red);padding:0.38rem 1.1rem;font-size:0.57rem;flex-shrink:0}
@@ -370,7 +383,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 // ═══════════════════════════════════════════════════════
 const ROLES = {
   warmup:     {id:"warmup",     label:"Warm Up",     color:"#2980B9", emoji:"🔵"},
-  midset:     {id:"midset",     label:"Mid Set",     color:"#C9A800", emoji:"🟡"},
+  midset:     {id:"midset",     label:"Mid Set",     color:"#E5A020", emoji:"🟡"},
   peak:       {id:"peak",       label:"Peak Time",   color:"#C0392B", emoji:"🔴"},
   afterhours: {id:"afterhours", label:"After-Hours", color:"#7D3C98", emoji:"🟣"},
 };
@@ -1636,7 +1649,7 @@ function updateRecordList(){
   const pageTracks=tracks.slice((p-1)*PAGE,p*PAGE);
   if(badge) badge.textContent=tracks.length+" tracks · "+S.releases.length+" releases";
   if(!pageTracks.length){
-    list.innerHTML='<div class="empty"><div class="ei">🔍</div><h3>No results</h3><p>Try different filters or clear the search.</p></div>';
+    list.innerHTML='<div class="empty"><div class="ei"><i data-lucide="search" style="width:2rem;height:2rem;color:var(--muted)"></i></div><h3>No results</h3><p>Try different filters or clear the search.</p></div>';
   } else {
     // Group consecutive tracks from same release for visual clarity
     const groups=[];
@@ -1719,7 +1732,7 @@ function updateSetPanel(){
   const panel=document.getElementById("set-panel");
   if(!panel||S.tab!=="set") return;
   if(!S.djSet.length){
-    panel.innerHTML='<div class="empty"><div class="ei">🎚️</div><h3>Set is empty</h3><p>Add tracks with <strong>"+ Set"</strong>, or use <strong>Auto-Suggest</strong> to build a harmonic set.</p></div>';
+    panel.innerHTML='<div class="empty"><div class="ei"><i data-lucide="layers" style="width:2rem;height:2rem;color:var(--muted)"></i></div><h3>Set is empty</h3><p>Add tracks with <strong>"+ Set"</strong>, or use <strong>Auto-Suggest</strong> to build a harmonic set.</p></div>';
     return;
   }
   const n=S.djSet.length;
@@ -1779,7 +1792,7 @@ function updateAnalysisPanel(){
   const panel=document.getElementById("set-panel");
   if(!panel||S.tab!=="analysis") return;
   if(!S.djSet.length){
-    panel.innerHTML='<div class="empty"><div class="ei">📊</div><h3>No set yet</h3><p>Add tracks to see analysis.</p></div>';
+    panel.innerHTML='<div class="empty"><div class="ei"><i data-lucide="bar-chart-2" style="width:2rem;height:2rem;color:var(--muted)"></i></div><h3>No set yet</h3><p>Add tracks to see analysis.</p></div>';
     return;
   }
   const bpms=S.djSet.map(t=>t.bpm).filter(Boolean);
@@ -1912,7 +1925,7 @@ function updateStickerPanel(){
   const panel=document.getElementById("set-panel");
   if(!panel||S.tab!=="stickers") return;
   if(!S.djSet.length){
-    panel.innerHTML='<div class="empty"><div class="ei">🏷️</div><h3>No set yet</h3><p>Build a set first.</p></div>';
+    panel.innerHTML='<div class="empty"><div class="ei"><i data-lucide="tag" style="width:2rem;height:2rem;color:var(--muted)"></i></div><h3>No set yet</h3><p>Build a set first.</p></div>';
     return;
   }
   const releaseMap=new Map();
@@ -2057,7 +2070,16 @@ function renderFull(){
     attachConnectEvents();
   } else {
     app.innerHTML=renderMainHTML();
-  setTimeout(()=>{ if(typeof lucide!=='undefined') lucide.createIcons(); },0);
+  setTimeout(()=>{
+    if(typeof lucide!=='undefined') lucide.createIcons();
+    // Sync theme icon with current theme
+    const icon = document.getElementById('theme-icon');
+    if(icon){
+      const t = document.documentElement.getAttribute('data-theme') || 'dark';
+      icon.setAttribute('data-lucide', t === 'dark' ? 'sun' : 'moon');
+      lucide.createIcons();
+    }
+  },0);
     attachMainEvents();
     updateRecordList();
     updateRightPanel();
@@ -2117,13 +2139,14 @@ function renderMainHTML(){
       +'</p>'
     +'</div>'
     +'<div class="hdr-right"><div class="dot"></div><span style="color:var(--green)">Loaded</span>'
+      +'<button class="btn sec sm" id="theme-toggle-btn" style="font-size:0.54rem;padding:0.16rem 0.42rem" title="Toggle light/dark"><i data-lucide="sun" class="sm" id="theme-icon"></i></button>'
       +'<button class="btn sec sm" id="sync-btn" style="font-size:0.54rem"><i data-lucide="refresh-cw" class="sm"></i> Sync</button>'
       +'<button class="btn sec sm" id="reset-btn"><i data-lucide="rotate-ccw" class="sm"></i> Reset</button>'      +(S.token?'<button class="btn sec sm" id="logout-btn" style="font-size:0.54rem"><i data-lucide="log-out" class="sm"></i> Logout</button>':"")
     +'</div>'
   +'</header>'
   +'<div class="prog-bar"></div>'
   +(S.error?'<div class="err-bar">⚠ '+esc(S.error)+'</div>':"")
-  +'<div id="idb-bar" class="idb-bar">'  +'<div class="idb-dot"></div>'  +'<span class="idb-txt">—</span>'  +'<span style="flex:1"></span>'  +'<span id="enrich-stats" style="font-size:0.52rem;color:var(--muted)"></span>'  +'<button class="btn sm" id="enrich-btn" style="margin-left:0.5rem;font-size:0.54rem;padding:0.14rem 0.55rem;background:rgba(139,92,246,0.08);color:var(--accent2);border:1px solid rgba(139,92,246,0.25)"><i data-lucide="zap" class="sm"></i> Enrich BPM/Key</button>'+'</div>'
+  +'<div id="idb-bar" class="idb-bar">'  +'<div class="idb-dot"></div>'  +'<span class="idb-txt">—</span>'  +'<span style="flex:1"></span>'  +'<span id="enrich-stats" style="font-size:0.52rem;color:var(--muted)"></span>'  +'<button class="btn sm" id="enrich-btn" style="margin-left:0.5rem;font-size:0.54rem;padding:0.14rem 0.55rem;background:var(--surface2);color:var(--text);border:1px solid var(--border)"><i data-lucide="zap" class="sm"></i> Enrich BPM/Key</button>'+'</div>'
   +'<div class="main">'
     +'<div class="left-panel">'
       +'<div class="ph"><span class="ptitle">Library</span><span class="badge" id="col-badge">—</span><button class="btn sec sm" id="export-lib-btn" style="margin-left:auto;font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button></div>'
@@ -2268,6 +2291,19 @@ function attachMainEvents(){
     location.reload();
   });
   document.getElementById("sync-btn")?.addEventListener("click",()=>syncCollection());
+
+  // Theme toggle
+  document.getElementById("theme-toggle-btn")?.addEventListener("click",()=>{
+    const html = document.documentElement;
+    const current = html.getAttribute("data-theme") || "dark";
+    const next = current === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("ourh-theme", next);
+    // Swap icon
+    const icon = document.getElementById("theme-icon");
+    if(icon) icon.setAttribute("data-lucide", next === "dark" ? "sun" : "moon");
+    if(typeof lucide !== "undefined") lucide.createIcons();
+  });
   document.getElementById("reset-btn")?.addEventListener("click",()=>{
     document.removeEventListener("click",handleGlobalClick);
     globalClickAttached=false;
@@ -2395,6 +2431,12 @@ function handleGlobalClick(e){
 //  BOOT
 // ═══════════════════════════════════════════════════════
 (async()=>{
+  // 0. Theme init — restore saved preference, default dark
+  (function(){
+    const saved = localStorage.getItem('ourh-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  })();
+
   // 1. Handle OAuth callback (?access_token=X&username=Y)
   const params=new URLSearchParams(window.location.search);
   if(params.has("access_token")){
