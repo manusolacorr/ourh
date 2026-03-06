@@ -479,57 +479,72 @@ function engine1BuildSet(pool, targetSize=20){
 
 function engine2SortSet(tracks){
   if(tracks.length<=2) return [...tracks];
-  let bestOpener=tracks[0], bestOpenerScore=-Infinity;
-  for(const t of tracks){
-    let score=0;
-    for(const o of tracks){
-      if(o.id===t.id) continue;
-      if(!isBlocked(t,o)) score+=transitionScore(t,o);
-      else score-=200;
-    }
-    score-=(t.bpm||130)*0.3;
-    if(score>bestOpenerScore){bestOpenerScore=score;bestOpener=t;}
-  }
-  const rem=[...tracks.filter(t=>t.id!==bestOpener.id)];
-  const sorted=[bestOpener];
-  while(rem.length>0){
-    const last=sorted[sorted.length-1];
-    const recent=recentWindow(sorted, 6);
-    const usedReleases=sorted.map(t=>t.releaseId);
-    const context={recentReleases:recent, usedReleases};
-    let candidates=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash");
-    if(!candidates.length) candidates=rem.filter(t=>!isBlocked(last,t));
-    if(!candidates.length) candidates=rem;
-    let best=candidates[0], bestScore=-Infinity;
-    for(const t of candidates){
-      const s=transitionScore(last,t,context);
-      if(s>bestScore){bestScore=s;best=t;}
-    }
-    sorted.push(best);
-    rem.splice(rem.indexOf(best),1);
-  }
+
   function totalScore(arr){
     let s=0;
-    for(let i=1;i<arr.length;i++) s+=transitionScore(arr[i-1],arr[i],{recentReleases:recentWindow(arr.slice(0,i),5)});
+    for(let i=1;i<arr.length;i++)
+      s+=transitionScore(arr[i-1],arr[i],{recentReleases:recentWindow(arr.slice(0,i),5)});
     return s;
   }
   function isLegal(arr){
     for(let i=1;i<arr.length;i++) if(isVinylBlocked(arr[i-1],arr[i])) return false;
     return true;
   }
-  let best=[...sorted], bestTotal=totalScore(best);
-  for(let pass=0;pass<5;pass++){
-    let improved=false;
+
+  // Stage 1: Multi-start greedy
+  function greedyFrom(opener){
+    const rem=[...tracks.filter(t=>t.id!==opener.id)];
+    const sorted=[opener];
+    while(rem.length>0){
+      const last=sorted[sorted.length-1];
+      const context={recentReleases:recentWindow(sorted,6),usedReleases:sorted.map(t=>t.releaseId)};
+      let cands=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash");
+      if(!cands.length) cands=rem.filter(t=>!isBlocked(last,t));
+      if(!cands.length) cands=rem;
+      let best=cands[0],bestScore=-Infinity;
+      for(const t of cands){const s=transitionScore(last,t,context);if(s>bestScore){bestScore=s;best=t;}}
+      sorted.push(best);
+      rem.splice(rem.indexOf(best),1);
+    }
+    return sorted;
+  }
+
+  const starters=tracks.length<=25?[...tracks]:[tracks[0],...Array.from({length:7},()=>tracks[Math.floor(Math.random()*tracks.length)])];
+  let best=greedyFrom(tracks[0]),bestTotal=totalScore(best);
+  for(const opener of starters){
+    const cand=greedyFrom(opener);const score=totalScore(cand);
+    if(score>bestTotal){bestTotal=score;best=cand;}
+  }
+
+  // Stage 2: 2-opt
+  let imp2=true;
+  while(imp2){
+    imp2=false;
     for(let i=1;i<best.length-1;i++){
       for(let j=i+1;j<best.length;j++){
-        const candidate=[...best.slice(0,i),...best.slice(i,j+1).reverse(),...best.slice(j+1)];
-        if(!isLegal(candidate)) continue;
-        const score=totalScore(candidate);
-        if(score>bestTotal){bestTotal=score;best=candidate;improved=true;}
+        const cand=[...best.slice(0,i),...best.slice(i,j+1).reverse(),...best.slice(j+1)];
+        if(!isLegal(cand)) continue;
+        const score=totalScore(cand);
+        if(score>bestTotal){bestTotal=score;best=cand;imp2=true;}
       }
     }
-    if(!improved) break;
   }
+
+  // Stage 3: Or-opt
+  let impOr=true;
+  while(impOr){
+    impOr=false;
+    outer:for(let i=0;i<best.length;i++){
+      for(let j=0;j<best.length;j++){
+        if(i===j||i===j-1) continue;
+        const arr=[...best];const[moved]=arr.splice(i,1);arr.splice(j>i?j-1:j,0,moved);
+        if(!isLegal(arr)) continue;
+        const score=totalScore(arr);
+        if(score>bestTotal){bestTotal=score;best=arr;impOr=true;break outer;}
+      }
+    }
+  }
+
   return best;
 }
 
