@@ -153,20 +153,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .tr-body{flex:1;min-width:0;padding-right:0.4rem}
 .tr-title{font-size:0.69rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em}
 .tr-meta{font-size:0.51rem;color:var(--muted);margin-top:0.1rem;display:flex;flex-wrap:wrap;gap:0.18rem;align-items:center}
-.role-pill{font-size:0.47rem;font-weight:600;color:#fff;padding:0.03rem 0.28rem;border-radius:10px;white-space:nowrap}
-[data-theme="light"] .role-pill{color:rgba(0,0,0,0.75)}
+.role-pill{font-size:0.47rem;font-weight:600;padding:0.03rem 0.3rem 0.03rem 0.22rem;border-radius:4px;white-space:nowrap;background:transparent;border:none;display:inline-flex;align-items:center;gap:0.2rem}
+.role-pill::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .tag-chip{font-size:0.49rem;padding:0.03rem 0.28rem;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-weight:500;white-space:nowrap}
 .tag-chip.bpm{color:var(--accent);border-color:rgba(94,106,210,0.3);background:rgba(94,106,210,0.07)}
 .tag-chip.key{color:var(--accent2);border-color:rgba(139,92,246,0.25);background:rgba(139,92,246,0.08)}
 .tag-chip.enr{font-size:0.39rem;opacity:0.45}
 /* Role override micro-buttons */
 .tr-roles{display:flex;gap:0.12rem;margin-top:0.16rem;flex-wrap:wrap}
-.rbtn{font-size:0.45rem;padding:0.04rem 0.28rem;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;color:var(--muted);font-family:inherit;transition:all 110ms;line-height:1.4}
-.rbtn:hover{border-color:var(--border-strong);color:var(--text)}
-.rbtn.act-warmup{background:var(--warmup);border-color:var(--warmup);color:#fff}
-.rbtn.act-midset{background:var(--midset);border-color:var(--midset);color:#fff}
-.rbtn.act-peak{background:var(--peak);border-color:var(--peak);color:#fff}
-.rbtn.act-afterhours{background:var(--afterhours);border-color:var(--afterhours);color:#fff}
+.rbtn{font-size:0.42rem;padding:0.03rem 0.26rem;border-radius:4px;border:1px solid transparent;background:transparent;cursor:pointer;color:var(--muted);font-family:inherit;transition:all 110ms;line-height:1.5;letter-spacing:0.01em}
+.rbtn:hover{border-color:var(--border);color:var(--text);background:var(--surface2)}
+.rbtn.act-warmup{border-color:var(--warmup);color:var(--warmup);background:transparent}
+.rbtn.act-midset{border-color:var(--midset);color:var(--midset);background:transparent}
+.rbtn.act-peak{border-color:var(--peak);color:var(--peak);background:transparent}
+.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours);background:transparent}
 .tr-addbtn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.18rem 0.44rem;font-size:0.55rem;border-radius:5px;cursor:pointer;font-family:inherit;font-weight:500;flex-shrink:0;white-space:nowrap;transition:all 120ms var(--ease)}
 .tr-addbtn:hover{border-color:var(--accent);color:var(--accent);background:rgba(94,106,210,0.08)}
 .tr-addbtn.in{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -1704,7 +1704,8 @@ function renderTrackRow(t){
   const artistDiff=t.trackArtist&&t.trackArtist!==t.releaseArtist;
   const rolesHtml=Object.values(ROLES).map(ro=>{
     const act=assignRole(t)===ro.id;
-    return '<button class="rbtn'+(act?' act-'+ro.id:'')+'" data-rs="'+esc(t.id)+'|'+ro.id+'" title="'+ro.label+'">'+ro.emoji+'</button>';
+    const shortLabel={warmup:'W·up',midset:'Mid',peak:'Peak',afterhours:'A·H'}[ro.id]||ro.label.slice(0,3);
+    return '<button class="rbtn'+(act?' act-'+ro.id:'')+'" data-rs="'+esc(t.id)+'|'+ro.id+'" title="'+ro.label+'">'+shortLabel+'</button>';
   }).join("");
   return '<div class="tr">'
     +'<div class="tr-stripe" style="background:'+role.color+'"></div>'
@@ -1714,7 +1715,7 @@ function renderTrackRow(t){
         +(artistDiff?' <span style="color:var(--muted);font-weight:400">— '+esc(t.trackArtist)+'</span>':'')
       +'</div>'
       +'<div class="tr-meta">'
-        +'<span class="role-pill" style="background:'+role.color+'">'+role.emoji+' '+role.label+'</span>'
+        +'<span class="role-pill" style="color:'+role.color+';--rc:'+role.color+'"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+role.color+';margin-right:0.18rem;flex-shrink:0;vertical-align:middle"></span>'+role.label+'</span>'
         +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM'+(bpmEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
         +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+(keyEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
         +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
@@ -1771,7 +1772,7 @@ function updateSetPanel(){
         +'</div>'
         +'<div class="si-artist">'+esc(t.releaseArtist)+' — '+esc(t.releaseTitle)+'</div>'
         +'<div class="si-tags">'
-          +'<span class="role-pill" style="background:'+role.color+'">'+role.emoji+' '+role.label+'</span>'
+          +'<span class="role-pill" style="color:'+role.color+';--rc:'+role.color+'"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+role.color+';margin-right:0.18rem;flex-shrink:0;vertical-align:middle"></span>'+role.label+'</span>'
           +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM</span>':'')
           +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+'</span>':'')
           +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
@@ -1974,7 +1975,7 @@ function updateStickerPanel(){
         +'<div class="sticker-info">'
           +'<div class="sticker-tname"><span style="color:var(--accent);font-size:0.5rem;margin-right:0.28rem">#'+t.setPos+'</span>'+esc(t.title)+'</div>'
           +'<div class="sticker-tmeta">'
-            +'<span style="color:'+role.color+';font-weight:700">'+role.emoji+' '+role.label+'</span>'
+            +'<span style="color:'+role.color+';font-weight:600">'+role.label+'</span>'
             +' · <span>'+(t.key||"?")+'·'+(CAM[t.key]?.n||"?")+'</span>'
             +' · <span>'+(t.bpm||"?")+' BPM</span>'
             +(t.duration?' · <span>'+esc(t.duration)+'</span>':"")
@@ -2025,7 +2026,7 @@ function renderTagCloud(){
     +'</div>';
   }
   var roleChips=chip('All',rf.size===0?'on-all':'','data-rc-clear','')
-    +Object.values(ROLES).map(function(r){return chip(r.emoji+' '+r.label,rf.has(r.id)?'on-role-'+r.id:'','data-rc',r.id);}).join('');
+    +Object.values(ROLES).map(function(r){return chip(r.label,rf.has(r.id)?'on-role-'+r.id:'','data-rc',r.id);}).join('');
   var genreChips=chip('All',gf.size===0?'on-all':'','data-gc-clear','')
     +S.allGenres.map(function(g){return chip(esc(g),gf.has(g)?'on-genre':'','data-gc',g);}).join('');
   var styleChips=chip('All',sf.size===0?'on-all':'','data-sc-clear','')
@@ -2046,7 +2047,7 @@ function updateTCBar(){
   var pills=document.getElementById("tc-pills");
   if(!pills) return;
   var active=[];
-  S.roleFilters.forEach(function(id){var r=ROLES[id];if(r)active.push({label:r.emoji+" "+r.label,color:r.color});});
+  S.roleFilters.forEach(function(id){var r=ROLES[id];if(r)active.push({label:r.label,color:r.color});});
   S.genreFilters.forEach(function(g){active.push({label:g,color:"var(--accent)"});});
   S.styleFilters.forEach(function(s){active.push({label:s,color:"var(--accent2)"});});
   S.decadeFilters.forEach(function(d){active.push({label:d,color:"#2c7c5a"});});
@@ -2185,7 +2186,7 @@ function renderMainHTML(){
         +'<button class="tab'+(S.tab==="set"?" on":"")+'" data-tab="set">Tracklist ('+S.djSet.length+')</button>'
         +'<button class="tab'+(S.tab==="analysis"?" on":"")+'" data-tab="analysis">Analysis</button>'
         +'<button class="tab'+(S.tab==="keys"?" on":"")+'" data-tab="keys">Keys</button>'
-        +'<button class="tab'+(S.tab==="stickers"?" on":"")+'" data-tab="stickers">🏷️ Stickers</button>'
+        +'<button class="tab'+(S.tab==="stickers"?" on":"")+'" data-tab="stickers"'<i data-lucide="tag" style="width:0.7rem;height:0.7rem;vertical-align:middle;margin-right:0.2rem"></i>Stickers'/button>'
       +'</div>'
       +'<div class="scroll"><div id="set-panel"></div></div>'
     +'</div>'
