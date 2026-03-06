@@ -999,7 +999,10 @@ async function syncCollection(){
     await dbSave("collection_data",{releases:S.releases,savedAt:S.idbSavedAt,username:S.username});
     renderFull();
     const t=document.querySelector(".idb-txt");
-    if(t){t.textContent=`✓ Added ${newReleases.length} new release${newReleases.length!==1?"s":""}`;setTimeout(()=>updateIDBBar(),3000);}
+    if(t){t.textContent=`✓ Added ${newReleases.length} new release${newReleases.length!==1?"s":""} — enriching…`;}
+    // Auto-enrich only the newly added releases
+    await enrichCollection(newReleases);
+    if(t) setTimeout(()=>updateIDBBar(),2000);
   }catch(e){
     S.loading=false;S.error="Sync failed: "+e.message;renderFull();
   }
