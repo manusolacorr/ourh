@@ -926,6 +926,85 @@ async function loadCollection(){
   }
 }
 
+async function syncCollection(){
+  if(!S.token||!S.username){alert("Not connected to Discogs");return;}
+  S.loading=true;S.error="";S.loadMsg="Checking for new releases…";S.fetchProgress=2;
+  renderFull();
+  try{
+    const first=await discogsGet(`/users/${S.username}/collection/folders/0/releases?per_page=100&page=1&sort=added&sort_order=desc`);
+    const totalItems=first.pagination.items;
+    const cachedIds=new Set(S.releases.map(r=>r.id));
+    let newRaw=first.releases.filter(r=>!cachedIds.has(r.basic_information.id));
+    // Fetch more pages if needed (all items on page 1 were new)
+    let page=2;
+    while(newRaw.length===first.releases.length&&page<=first.pagination.pages){
+      S.loadMsg=`Fetching new releases page ${page}…`;updateProgressUI();
+      const pg=await discogsGet(`/users/${S.username}/collection/folders/0/releases?per_page=100&page=${page}&sort=added&sort_order=desc`);
+      const moreNew=pg.releases.filter(r=>!cachedIds.has(r.basic_information.id));
+      newRaw=[...newRaw,...moreNew];
+      if(moreNew.length<pg.releases.length) break;
+      page++;await sleep(150);
+    }
+    if(!newRaw.length){
+      S.loading=false;S.loadMsg="";S.totalReleases=totalItems;renderFull();
+      const t=document.querySelector(".idb-txt");
+      if(t){t.textContent="✓ Already up to date";setTimeout(()=>updateIDBBar(),2500);}
+      return;
+    }
+    const newReleases=[];
+    for(let i=0;i<newRaw.length;i++){
+      const raw=newRaw[i];const info=raw.basic_information;
+      S.loadMsg=`Loading ${i+1}/${newRaw.length}: ${info.title}`;
+      S.fetchProgress=10+Math.round((i/newRaw.length)*88);updateProgressUI();
+      const genres=info.genres||[],styles=info.styles||[];
+      const relArtist=(info.artists||[]).map(a=>a.name.replace(/\s*\(\d+\)$/,'')).join(", ")||"Unknown";
+      const bpmBase=guessBPM(genres,styles);
+      let tracks=[],releaseData=null;
+      try{
+        for(let attempt=0;attempt<2;attempt++){
+          try{releaseData=await discogsGet(`/releases/${info.id}`);break;}
+          catch(e){if(attempt===0&&(e.message.includes("429")||e.message.includes("rate"))){await sleep(2500);}else{throw e;}}
+        }
+        await sleep(100);
+        tracks=flattenTracklist((releaseData||{}).tracklist||[]).map((t,ti)=>{
+          const tArtist=(t.artists||[]).map(a=>a.name.replace(/\s*\(\d+\)$/,'')).join(", ")||relArtist;
+          return {
+            id:`${info.id}-${ti}`,pos:t.position||String(ti+1),title:t.title||"Untitled",
+            trackArtist:tArtist,bpm:bpmBase+rnd(9)-4,key:guessKey(info.id*31+ti*17),
+            bpmSource:"guess",keySource:"guess",duration:t.duration||"",genres,styles,
+            releaseId:info.id,releaseTitle:info.title,releaseArtist:relArtist,
+            thumb:info.thumb||null,year:info.year||0,
+            label:(info.labels||[]).map(l=>l.name).join(", ")||"",
+            discogsNotes:(t.notes||"")+" "+((releaseData||{}).notes||"")
+          };
+        });
+      }catch(e){console.warn(`Tracklist fetch failed:`,e);}
+      if(!tracks.length) tracks=[{
+        id:`${info.id}-0`,pos:"A",title:info.title,trackArtist:relArtist,
+        bpm:bpmBase,key:guessKey(info.id),duration:"",genres,styles,
+        releaseId:info.id,releaseTitle:info.title,releaseArtist:relArtist,
+        thumb:info.thumb||null,year:info.year||0,
+        label:(info.labels||[]).map(l=>l.name).join(", ")||"",
+        bpmSource:"guess",keySource:"guess",discogsNotes:""
+      }];
+      newReleases.push({id:info.id,title:info.title,artist:relArtist,genres,styles,
+        thumb:info.thumb||null,year:info.year||0,
+        label:(info.labels||[]).map(l=>l.name).join(", ")||"",tracks});
+    }
+    S.releases=[...newReleases,...S.releases];
+    S.totalReleases=totalItems;
+    const {genres,styles,decades}=collectMeta(S.releases);
+    S.allGenres=genres;S.allStyles=styles;S.allDecades=decades;
+    S.idbSavedAt=Date.now();S.loading=false;S.loadMsg="";
+    await dbSave("collection_data",{releases:S.releases,savedAt:S.idbSavedAt,username:S.username});
+    renderFull();
+    const t=document.querySelector(".idb-txt");
+    if(t){t.textContent=`✓ Added ${newReleases.length} new release${newReleases.length!==1?"s":""}`;setTimeout(()=>updateIDBBar(),3000);}
+  }catch(e){
+    S.loading=false;S.error="Sync failed: "+e.message;renderFull();
+  }
+}
+
 
 // ═══════════════════════════════════════════════════════
 //  BPM / KEY ENRICHMENT PIPELINE
@@ -1904,6 +1983,7 @@ function renderMainHTML(){
       +'</p>'
     +'</div>'
     +'<div class="hdr-right"><div class="dot"></div><span style="color:var(--green)">Loaded</span>'
+      +'<button class="btn sec sm" id="sync-btn" style="font-size:0.54rem">⟳ Sync</button>'
       +'<button class="btn sec sm" id="reset-btn">↩ Reset</button>'      +(S.token?'<button class="btn sec sm" id="logout-btn" style="font-size:0.54rem">⏏ Logout</button>':"")
     +'</div>'
   +'</header>'
@@ -2053,6 +2133,7 @@ function attachMainEvents(){
     try{ await dbDelete("discogs_auth"); await dbDelete("collection_data"); await dbDelete("dj_set"); }catch(e){}
     location.reload();
   });
+  document.getElementById("sync-btn")?.addEventListener("click",()=>syncCollection());
   document.getElementById("reset-btn")?.addEventListener("click",()=>{
     document.removeEventListener("click",handleGlobalClick);
     globalClickAttached=false;
