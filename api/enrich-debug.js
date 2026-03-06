@@ -28,14 +28,33 @@ module.exports = async function handler(req, res) {
       const url = `https://www.beatport.com/search/tracks?q=${encodeURIComponent(`${artist} ${title}`)}`;
       const r = await fetch(url, { headers: HEADERS });
       const text = await r.text();
-      const hasNextData = text.includes('__NEXT_DATA__');
-      const nextDataMatch = text.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]{0,3000})/);
+      let parsed = null, firstHit = null, tracks = [];
+      const m2 = text.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+      if (m2) {
+        try {
+          parsed = JSON.parse(m2[1]);
+          const pp = parsed?.props?.pageProps;
+          tracks = pp?.tracks ||
+                   pp?.data?.tracks?.data ||
+                   pp?.dehydratedState?.queries?.[0]?.state?.data?.data ||
+                   pp?.dehydratedState?.queries?.[0]?.state?.data?.results || [];
+          firstHit = tracks[0] || null;
+        } catch(e) {}
+      }
       return res.json({
         status: r.status,
-        has_next_data: hasNextData,
+        has_next_data: text.includes('__NEXT_DATA__'),
         html_length: text.length,
-        next_data_preview: nextDataMatch ? nextDataMatch[1].slice(0, 2000) : null,
-        html_preview: text.slice(0, 500),
+        tracks_found: tracks.length,
+        first_hit: firstHit ? {
+          name: firstHit.name || firstHit.title,
+          bpm: firstHit.bpm,
+          key: firstHit.key,
+          camelot_key: firstHit.camelot_key,
+          chord_type_id: firstHit.chord_type_id,
+          genre: firstHit.genre,
+          sub_genre: firstHit.sub_genre,
+        } : null,
       });
     }
 

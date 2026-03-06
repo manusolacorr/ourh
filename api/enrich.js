@@ -123,6 +123,7 @@ async function beatport(artist, title) {
   const tracks =
     data?.props?.pageProps?.tracks ||
     data?.props?.pageProps?.data?.tracks?.data ||
+    data?.props?.pageProps?.dehydratedState?.queries?.[0]?.state?.data?.data ||
     data?.props?.pageProps?.dehydratedState?.queries?.[0]?.state?.data?.results || [];
 
   if (!tracks.length) return null;
@@ -136,7 +137,9 @@ async function beatport(artist, title) {
 
   if (!hit) return null;
   const bpm = hit.bpm || hit.tempo || null;
-  const keyRaw = hit.key?.camelot_name || hit.key?.name || hit.camelot_key || null;
+  // Beatport key: hit.key.camelot_name, or hit.key.name, or chord_type mapped
+  const keyRaw = hit.key?.camelot_name || hit.key?.camelot || hit.key?.name || hit.camelot_key || null;
+  console.log('[beatport] hit bpm:', hit.bpm, 'key obj:', JSON.stringify(hit.key), 'keyRaw:', keyRaw);
   const genres = hit.genre ? [hit.genre.name] : (hit.genres?.map(g => g.name) || []);
   const styles = hit.subgenre ? [hit.subgenre.name] : (hit.sub_genres?.map(g => g.name) || []);
   return {
