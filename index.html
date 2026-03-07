@@ -731,7 +731,7 @@ function engine1BuildSet(pool, targetSize=20){
         && t.bpm >= prevTrack.bpm        // must be same or higher
         && t.bpm <= prevTrack.bpm + 12   // but not a giant jump
         && !isVinylBlocked(prevTrack,t)
-        && !isHardClash(prevTrack,t)
+        && !isPhysicalClash(prevTrack,t)
         && camCompat(prevTrack.key,t.key)!=="clash"
       )
       .sort((a,b)=>a.bpm-b.bpm);        // prefer the smallest step up
@@ -761,7 +761,7 @@ function engine1BuildSet(pool, targetSize=20){
     for(const t of eligible){
       if(used.has(t.id)) continue;
       if(isVinylBlocked(last,t)) continue;
-      if(isHardClash(last,t)) continue;
+      if(isPhysicalClash(last,t)) continue; // block all ±8% violations
       if(set.filter(s=>s.releaseId===t.releaseId).length>=2) continue;
       const compat=camCompat(last.key,t.key);
       if(compat==="clash"&&pos<0.25) continue;
@@ -809,7 +809,10 @@ function engine2SortSet(tracks){
     return s;
   }
   function isLegal(arr){
-    for(let i=1;i<arr.length;i++) if(isVinylBlocked(arr[i-1],arr[i])) return false;
+    for(let i=1;i<arr.length;i++){
+      if(isVinylBlocked(arr[i-1],arr[i])) return false;
+      if(isPhysicalClash(arr[i-1],arr[i])) return false;
+    }
     return true;
   }
 
