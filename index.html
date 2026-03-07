@@ -530,6 +530,23 @@ function camDistance(keyA, keyB){
   return 7;
 }
 
+// Role arc order — warmup=0, midset=1, peak=2, afterhours=3
+// afterhours can follow peak (landing) or anything (late night float)
+const ROLE_RANK={warmup:0,midset:1,peak:2,afterhours:3};
+
+function roleRegressionPenalty(roleA, roleB){
+  const ra=ROLE_RANK[roleA]??1, rb=ROLE_RANK[roleB]??1;
+  // afterhours is a valid landing after peak — not a regression
+  if(roleA==="peak"&&roleB==="afterhours") return 0;
+  // midset after peak is a valley — slight penalty but allowed
+  if(roleA==="peak"&&roleB==="midset") return -40;
+  // going backwards hard
+  if(rb<ra-1) return -180;
+  // small step back (e.g. midset→warmup)
+  if(rb<ra) return -80;
+  return 0;
+}
+
 function transitionScore(a, b, context={}){
   if(!a||!b) return -9999;
   const compat=camCompat(a.key,b.key);
@@ -561,6 +578,10 @@ function transitionScore(a, b, context={}){
     else if(delta>8&&delta<=15) score+=8;
     else if(delta<-10) score-=15;
   }
+  // Role arc penalty — regression costs points
+  if(context.arcEnabled!==false){
+    score+=roleRegressionPenalty(assignRole(a), assignRole(b));
+  }
   return score;
 }
 
@@ -574,24 +595,72 @@ function engine1BuildSet(pool, targetSize=20){
   const size=Math.min(targetSize, eligible.length);
   const bpms=eligible.map(t=>t.bpm);
   const minB=Math.min(...bpms), maxB=Math.max(...bpms), rangeB=maxB-minB||1;
+
+  // BPM arc: gentle start → build → peak at ~⅔ → one valley dip → landing
   function arcTarget(pos){
-    if(pos<0.12) return minB+rangeB*0.05;
-    if(pos<0.35) return minB+rangeB*0.28;
-    if(pos<0.58) return minB+rangeB*0.58;
-    if(pos<0.80) return minB+rangeB*0.88;
-    return minB+rangeB*0.50;
+    if(pos<0.12) return minB+rangeB*0.05;   // opener: lowest BPM range
+    if(pos<0.35) return minB+rangeB*0.28;   // warm build
+    if(pos<0.50) return minB+rangeB*0.55;   // gaining momentum
+    if(pos<0.52) return minB+rangeB*0.35;   // valley: deliberate breath (1 slot)
+    if(pos<0.75) return minB+rangeB*0.88;   // peak push — two thirds of set
+    if(pos<0.88) return minB+rangeB*0.72;   // peak plateau
+    return minB+rangeB*0.45;                 // landing: after-hours / cool close
   }
-  const openerPool=eligible.filter(t=>t.bpm<=minB+rangeB*0.30).sort(()=>Math.random()-0.5);
-  const opener=openerPool.length?openerPool[0]:eligible[Math.floor(Math.random()*Math.min(5,eligible.length))];
+
+  // Role arc budget per positional zone
+  // Returns a score bonus for tracks whose role fits the current position
+  function roleArcBonus(track, pos){
+    const role=assignRole(track);
+    // Zone 0–30%: warmup strongly preferred
+    if(pos<0.30){
+      if(role==="warmup")   return 120;
+      if(role==="midset")   return 20;
+      if(role==="peak")     return -80;
+      if(role==="afterhours") return -60;
+    }
+    // Zone 30–52%: midset zone, warmup still ok as opener lingers
+    if(pos<0.52){
+      if(role==="warmup")   return 20;
+      if(role==="midset")   return 100;
+      if(role==="peak")     return -30;
+      if(role==="afterhours") return -50;
+    }
+    // Valley zone ~50–55%: reward a midset dip
+    if(pos>=0.48&&pos<0.56){
+      if(role==="midset")   return 80;
+      if(role==="warmup")   return 40;
+      if(role==="peak")     return -60;
+    }
+    // Zone 55–85%: peak zone
+    if(pos<0.85){
+      if(role==="peak")     return 120;
+      if(role==="midset")   return 30;
+      if(role==="warmup")   return -80;
+      if(role==="afterhours") return -40;
+    }
+    // Zone 85–100%: landing — afterhours or soft midset
+    if(role==="afterhours") return 120;
+    if(role==="midset")     return 60;
+    if(role==="warmup")     return 20;
+    if(role==="peak")       return -60;
+    return 0;
+  }
+
+  // Pick opener from the lowest-BPM warm-up candidates
+  const openerPool=eligible.filter(t=>t.bpm<=minB+rangeB*0.30&&assignRole(t)==="warmup").sort(()=>Math.random()-0.5);
+  const openerFallback=eligible.filter(t=>t.bpm<=minB+rangeB*0.30).sort(()=>Math.random()-0.5);
+  const opener=openerPool.length?openerPool[0]:openerFallback.length?openerFallback[0]:eligible[Math.floor(Math.random()*Math.min(5,eligible.length))];
+
   const set=[opener];
   const used=new Set([opener.id]);
+
   while(set.length<size){
     const last=set[set.length-1];
     const pos=set.length/size;
     const target=arcTarget(pos);
     const recent=recentWindow(set, 6);
     const usedReleases=set.map(t=>t.releaseId);
-    const context={recentReleases:recent, usedReleases};
+    const context={recentReleases:recent, usedReleases, arcEnabled:true};
     const scored=[];
     for(const t of eligible){
       if(used.has(t.id)) continue;
@@ -606,7 +675,10 @@ function engine1BuildSet(pool, targetSize=20){
         if(!hasExit) continue;
       }
       let s=transitionScore(last,t,context);
+      // BPM arc pull
       s+=Math.max(0, 40-Math.abs(t.bpm-target)*2);
+      // Role arc bonus
+      s+=roleArcBonus(t, pos);
       scored.push({t,s});
     }
     if(!scored.length) break;
@@ -628,7 +700,18 @@ function engine2SortSet(tracks){
   function totalScore(arr){
     let s=0;
     for(let i=1;i<arr.length;i++)
-      s+=transitionScore(arr[i-1],arr[i],{recentReleases:recentWindow(arr.slice(0,i),5)});
+      s+=transitionScore(arr[i-1],arr[i],{recentReleases:recentWindow(arr.slice(0,i),5),arcEnabled:true});
+    // Direction penalty: penalize BPM zigzags — a consistent slope is preferred
+    // Each direction reversal costs points; magnitude matters (bigger flip = bigger cost)
+    for(let i=2;i<arr.length;i++){
+      const prev=(arr[i-1].bpm||0)-(arr[i-2].bpm||0);
+      const curr=(arr[i].bpm||0)-(arr[i-1].bpm||0);
+      if(prev*curr<0){
+        // Direction reversed — cost proportional to the size of the reversal
+        const flipSize=Math.abs(curr);
+        s-=20+flipSize*1.5;
+      }
+    }
     return s;
   }
   function isLegal(arr){
