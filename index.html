@@ -652,18 +652,44 @@ function engine1BuildSet(pool, targetSize=20){
     return bpms[Math.floor(bpms.length*0.40)];               // landing
   }
 
-  // Opener: lowest-rank role available, lowest BPM within that role
+  // Opener: lowest-rank role, strict bottom-10% BPM — no surprises on track 1
   const openerRole=rolesInPool[0];
   const openerCands=eligible
     .filter(t=>assignRole(t)===openerRole)
     .sort((a,b)=>a.bpm-b.bpm);
-  // Pick from bottom 30% BPM of opener role candidates, with some randomness
-  const openerSlice=openerCands.slice(0,Math.max(1,Math.floor(openerCands.length*0.30)));
-  const opener=openerSlice.sort(()=>Math.random()-0.5)[0]
+  // Tight window: absolute lowest BPM tracks only (bottom 10%, min 3 candidates)
+  const openerSlice=openerCands.slice(0, Math.max(3, Math.floor(openerCands.length*0.10)));
+  // Within that window pick randomly — gives variety without energy surprises
+  const opener=openerSlice[Math.floor(Math.random()*openerSlice.length)]
     || eligible.sort((a,b)=>a.bpm-b.bpm)[0];
+
+  // Lock slots 2–3 to same opener role + strictly ascending BPM
+  // This ensures the set begins with a clear, committed upward direction
+  function pickEarlySlot(prevTrack, usedIds, lockRole){
+    const cands=eligible
+      .filter(t=>!usedIds.has(t.id)
+        && assignRole(t)===lockRole
+        && t.bpm >= prevTrack.bpm        // must be same or higher
+        && t.bpm <= prevTrack.bpm + 12   // but not a giant jump
+        && !isVinylBlocked(prevTrack,t)
+        && !isHardClash(prevTrack,t)
+        && camCompat(prevTrack.key,t.key)!=="clash"
+      )
+      .sort((a,b)=>a.bpm-b.bpm);        // prefer the smallest step up
+    if(!cands.length) return null;
+    // Pick from the bottom 3 to avoid always choosing the exact same track
+    return cands.slice(0, Math.min(3, cands.length))[Math.floor(Math.random()*Math.min(3,cands.length))];
+  }
 
   const set=[opener];
   const used=new Set([opener.id]);
+
+  // Slots 2 and 3: locked to opener role + ascending BPM for a committed start
+  for(let earlySlot=0; earlySlot<2 && set.length<size; earlySlot++){
+    const earlyPick=pickEarlySlot(set[set.length-1], used, openerRole);
+    if(earlyPick){ set.push(earlyPick); used.add(earlyPick.id); }
+    else break; // crate doesn't have enough tracks in opener role — move on
+  }
 
   while(set.length<size){
     const last=set[set.length-1];
