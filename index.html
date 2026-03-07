@@ -13,10 +13,10 @@
   --bg:#F7F8F9;--surface:#FFFFFF;--surface2:#F0F1F3;--surface3:#E8E9EC;
   --border:#E2E2E5;--border-strong:#C8C8CE;
   --text:#0D0D0D;--muted:#717179;--muted2:#9A9AA5;
-  --accent:#5E6AD2;--accent2:#7C3AED;
-  --accent-primary:#5E6AD2;
-  --red:#DC2626;--green:#16A34A;--orange:#D97706;
-  --warmup:#3B82F6;--midset:#10B981;--peak:#EF4444;--afterhours:#8B5CF6;
+  --accent:#5466C8;--accent2:#7046BE;
+  --accent-primary:#5466C8;
+  --red:#D93535;--green:#18A058;--orange:#D88C10;
+  --warmup:#3B7DD8;--midset:#0D9488;--peak:#E05575;--afterhours:#7C65C8;
   --shadow-btn:0 1px 2px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);
   --shadow-card:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.06),0 0 0 1px var(--border);
   --shadow-focus:0 0 0 2px #FFFFFF,0 0 0 4px #5E6AD2;
@@ -32,7 +32,7 @@
     --accent:#5E6AD2;--accent2:#8B5CF6;
     --accent-primary:#5E6AD2;
     --red:#E55353;--green:#26B05A;--orange:#E5A020;
-    --warmup:#60A5FA;--midset:#34D399;--peak:#F87171;--afterhours:#A78BFA;
+    --warmup:#7EB8F7;--midset:#6EE7B7;--peak:#FDA4AF;--afterhours:#C4B5FD;
     --shadow-btn:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06) inset;
     --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px var(--border);
     --shadow-focus:0 0 0 2px #0B0B0B,0 0 0 4px #5E6AD2;
@@ -44,10 +44,10 @@
   --bg:#0B0B0B;--surface:#121212;--surface2:#1A1A1A;--surface3:#242424;
   --border:#222222;--border-strong:rgba(255,255,255,0.12);
   --text:#F0F0F2;--muted:#62626B;--muted2:#A0A0AB;
-  --accent:#5E6AD2;--accent2:#8B5CF6;
-  --accent-primary:#5E6AD2;
-  --red:#E55353;--green:#26B05A;--orange:#E5A020;
-  --warmup:#60A5FA;--midset:#34D399;--peak:#F87171;--afterhours:#A78BFA;
+  --accent:#6272D4;--accent2:#9B72CF;
+  --accent-primary:#6272D4;
+  --red:#E05555;--green:#2DB870;--orange:#E8A020;
+  --warmup:#7EB8F7;--midset:#6EE7B7;--peak:#FDA4AF;--afterhours:#C4B5FD;
   --shadow-btn:0 1px 2px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06) inset;
   --shadow-card:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.25),0 0 0 1px var(--border);
   --shadow-focus:0 0 0 2px #0B0B0B,0 0 0 4px #5E6AD2;
@@ -57,10 +57,10 @@
   --bg:#F7F8F9;--surface:#FFFFFF;--surface2:#F0F1F3;--surface3:#E8E9EC;
   --border:#E2E2E5;--border-strong:#C8C8CE;
   --text:#0D0D0D;--muted:#717179;--muted2:#9A9AA5;
-  --accent:#5E6AD2;--accent2:#7C3AED;
-  --accent-primary:#5E6AD2;
-  --red:#DC2626;--green:#16A34A;--orange:#D97706;
-  --warmup:#3B82F6;--midset:#10B981;--peak:#EF4444;--afterhours:#8B5CF6;
+  --accent:#5466C8;--accent2:#7046BE;
+  --accent-primary:#5466C8;
+  --red:#D93535;--green:#18A058;--orange:#D88C10;
+  --warmup:#3B7DD8;--midset:#0D9488;--peak:#E05575;--afterhours:#7C65C8;
   --shadow-btn:0 1px 2px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);
   --shadow-card:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.06),0 0 0 1px var(--border);
   --shadow-focus:0 0 0 2px #FFFFFF,0 0 0 4px #5E6AD2;
@@ -384,10 +384,10 @@ button.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours
 //  ROLE TAXONOMY  — Intent-Based (BPM is metadata, not a classifier)
 // ═══════════════════════════════════════════════════════
 const ROLES = {
-  warmup:     {id:"warmup",     label:"Warm Up",     color:"#60A5FA", emoji:"🔵"},
-  midset:     {id:"midset",     label:"Mid Set",     color:"#34D399", emoji:"🟢"},
-  peak:       {id:"peak",       label:"Peak Time",   color:"#F87171", emoji:"🔴"},
-  afterhours: {id:"afterhours", label:"After-Hours", color:"#A78BFA", emoji:"🟣"},
+  warmup:     {id:"warmup",     label:"Warm Up",     color:"#7EB8F7", emoji:"🔵"},
+  midset:     {id:"midset",     label:"Mid Set",     color:"#6EE7B7", emoji:"🟢"},
+  peak:       {id:"peak",       label:"Peak Time",   color:"#FDA4AF", emoji:"🔴"},
+  afterhours: {id:"afterhours", label:"After-Hours", color:"#C4B5FD", emoji:"🟣"},
 };
 
 function autoRole(track){
@@ -2422,6 +2422,21 @@ function handleGlobalClick(e){
   // Excel exports
   if(e.target.id==="export-lib-btn") exportLibraryXLS();
   if(e.target.id==="export-set-btn") exportSetXLS();
+  // Smart Sort — delegated because button is dynamically injected
+  if(e.target.closest("#engine2-btn")){
+    if(!S.djSet.length) return;
+    S.djSet=engine2SortSet(S.djSet);updateSetPanel();updateTabBtns();
+  }
+  // Theme toggle — also delegated
+  if(e.target.closest("#theme-toggle-btn")){
+    const html=document.documentElement;
+    const next=(html.getAttribute("data-theme")||"dark")==="dark"?"light":"dark";
+    html.setAttribute("data-theme",next);
+    localStorage.setItem("ourh-theme",next);
+    const icon=document.getElementById("theme-icon");
+    if(icon) icon.setAttribute("data-lucide",next==="dark"?"sun":"moon");
+    if(typeof lucide!=="undefined") lucide.createIcons();
+  }
 }
 
 
