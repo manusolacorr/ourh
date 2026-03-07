@@ -499,27 +499,42 @@ function guessKey(uid){
 
 
 function cCol(c){return {perfect:"#9a6c2e",compatible:"#27ae60",close:"#c96a1a",clash:"#c0392b"}[c]||"#888";}
-function bpmBridge(a,b){
+// ±8% Technics 1200 MK2 pitch fader formula
+// |((BPM_B - BPM_A) / BPM_A) * 100| — spec-exact
+function pitchPercent(a, b){
   if(!a||!b) return null;
-  const d=Math.abs(a-b);
-  if(d===0) return {l:"same BPM",ok:true};
-  if(d<=8)  return {l:`±${d} BPM`,ok:true};
-  const r=Math.max(a,b)/Math.min(a,b);
-  if(r>1.9&&r<2.1) return {l:"×2 bridge",ok:true};
-  return {l:`±${d} BPM`,ok:false};
+  return ((b - a) / a) * 100;
+}
+function bpmBridge(a, b){
+  if(!a||!b) return null;
+  if(a===b) return {l:"same BPM", ok:true, pct:0};
+  const pct = pitchPercent(a, b);
+  const absPct = Math.abs(pct);
+  const d = Math.abs(a - b);
+  // ×2 harmonic bridge (e.g. 65→130 BPM) — valid even outside ±8%
+  const r = Math.max(a,b)/Math.min(a,b);
+  if(r>1.9&&r<2.1) return {l:"×2 bridge", ok:true, pct};
+  if(absPct<=8) return {l:`±${d} BPM`, ok:true, pct};
+  // Physical clash: exceeds Technics pitch fader range
+  return {l:`±${d} BPM`, ok:false, pct, physicalClash: true};
 }
 
 // ═══════════════════════════════════════════════════════
 //  SMART DJ ENGINES
 // ═══════════════════════════════════════════════════════
 function isVinylBlocked(a, b){ return sameSide(a, b); }
+// Physical clash = BPM exceeds ±8% of fader range — independent of key
+function isPhysicalClash(a, b){
+  if(!a?.bpm||!b?.bpm) return false;
+  return bpmBridge(a.bpm, b.bpm)?.physicalClash === true;
+}
+// Hard block = vinyl side conflict OR key clash WITH physical BPM clash
 function isHardClash(a, b){
   if(!a||!b) return false;
-  const compat=camCompat(a.key,b.key);
-  const bridge=bpmBridge(a.bpm,b.bpm);
-  return compat==="clash" && bridge && !bridge.ok;
+  return isPhysicalClash(a, b) && camCompat(a.key, b.key)==="clash";
 }
-function isBlocked(a, b){ return isVinylBlocked(a,b) || isHardClash(a,b); }
+// For Auto-Suggest filtering: block anything physically unmixable
+function isBlocked(a, b){ return isVinylBlocked(a,b) || isPhysicalClash(a,b); }
 
 function camDistance(keyA, keyB){
   if(!keyA||!keyB||keyA===keyB) return 0;
@@ -533,6 +548,43 @@ function camDistance(keyA, keyB){
 // Role arc order — warmup=0, midset=1, peak=2, afterhours=3
 // afterhours can follow peak (landing) or anything (late night float)
 const ROLE_RANK={warmup:0,midset:1,peak:2,afterhours:3};
+
+// ── Energy Scale 1–10 ──────────────────────────────────────────────────
+// Maps BPM + role to a 1–10 energy value.
+// Used by Vibe Fracture check: no auto-transition should jump >±2 points
+// unless it's a deliberate Peak Time push (allowed up to +4).
+function energyScore(track){
+  const bpm=track.bpm||0;
+  const role=assignRole(track);
+  // Base score from BPM (continuous)
+  let base;
+  if(bpm<80)       base=1;
+  else if(bpm<95)  base=2;
+  else if(bpm<105) base=3;
+  else if(bpm<112) base=4;
+  else if(bpm<118) base=5;
+  else if(bpm<124) base=6;
+  else if(bpm<130) base=7;
+  else if(bpm<136) base=8;
+  else if(bpm<142) base=9;
+  else             base=10;
+  // Role modifier: After-Hours tracks feel lower energy regardless of BPM
+  if(role==="afterhours") base=Math.max(1, base-2);
+  if(role==="warmup")     base=Math.max(1, base-1);
+  if(role==="peak")       base=Math.min(10, base+1);
+  return Math.round(Math.min(10, Math.max(1, base)));
+}
+
+// Vibe Fracture check: flags transitions that jump too much energy
+// Returns null if fine, or a warning string if fracture detected
+function vibeFracture(a, b){
+  const ea=energyScore(a), eb=energyScore(b);
+  const delta=eb-ea;
+  const isPeakPush=assignRole(b)==="peak"&&delta>0;
+  if(Math.abs(delta)>4) return {delta, severe:true};
+  if(Math.abs(delta)>2&&!isPeakPush) return {delta, severe:false};
+  return null;
+}
 
 function roleRegressionPenalty(roleA, roleB){
   const ra=ROLE_RANK[roleA]??1, rb=ROLE_RANK[roleB]??1;
@@ -563,7 +615,9 @@ function transitionScore(a, b, context={}){
   if(sameRecord(a,b)) score-=150;
   const cg=(a.genres||[]).filter(g=>(b.genres||[]).includes(g)).length;
   const cs=(a.styles||[]).filter(s=>(b.styles||[]).includes(s)).length;
-  score+=cg*12+cs*10;
+  // Genre-first priority (spec: genre → key → BPM ordering)
+  // Genre match is the primary crate coherence signal — weight it higher
+  score+=cg*30+cs*14;  // genre: 30pts/match (was 12), style: 14pts (was 10)
   if(context.recentReleases){
     const timesPlayed=context.recentReleases.filter(id=>id===b.releaseId).length;
     score-=timesPlayed*150;
@@ -581,6 +635,11 @@ function transitionScore(a, b, context={}){
   // Role arc penalty — regression costs points
   if(context.arcEnabled!==false){
     score+=roleRegressionPenalty(assignRole(a), assignRole(b));
+  }
+  // Vibe Fracture penalty — large energy jumps cost points
+  const vf=vibeFracture(a,b);
+  if(vf){
+    score+=vf.severe?-200:-80; // severe (>4 pts) nearly blocks; moderate discourages
   }
   return score;
 }
@@ -820,7 +879,10 @@ function setSuggestions(set){
     if(sameSide(p,c)) out.push(`🛑 ${i}→${i+1}: Same vinyl side (${p.releaseTitle} ${p.pos}/${c.pos}) — physically impossible!`);
     else if(sameRecord(p,c)) out.push(`⟲ ${i}→${i+1}: Same record (${p.releaseTitle}) — flip required.`);
     if(compat==="clash"&&!sameSide(p,c)) out.push(`⚠️ ${i}→${i+1}: Key clash (${p.key}→${c.key}). Use a breakdown.`);
-    if(diff&&!diff.ok&&!sameSide(p,c)) out.push(`🔀 ${i}→${i+1}: ${diff.l}. Bridge with percussion.`);
+    if(diff?.physicalClash&&!sameSide(p,c)) out.push(`⛔ ${i}→${i+1}: PHYSICAL CLASH (${diff.l}) — exceeds Technics ±8% fader range.`);
+    else if(diff&&!diff.ok&&!sameSide(p,c)) out.push(`🔀 ${i}→${i+1}: ${diff.l}. Bridge with percussion.`);
+    const vf=vibeFracture(p,c);
+    if(vf&&!sameSide(p,c)) out.push(vf.severe?`💥 ${i}→${i+1}: Severe vibe fracture (Δ${vf.delta} energy points).`:`⚠️ ${i}→${i+1}: Energy jump (Δ${vf.delta} pts) — consider a bridge track.`);
     if(compat==="perfect"&&diff?.ok) out.push(`✨ ${i}→${i+1}: Perfect — let it ride.`);
     const pd=pitchDrift(p.bpm,c.bpm);if(pd?.high)out.push(`⚡ ${i}→${i+1}: High pitch drift (${pd.sign}${pd.pct}%) — turntable strain.`);
     if(compat==="compatible"&&diff?.ok) out.push(`💚 ${i}→${i+1}: Clean harmonic flow.`);
@@ -1869,11 +1931,20 @@ function updateSetPanel(){
       if(sameSd) parts.push("🛑 same side — BLOCKED");
       else{
         if(sameRecord(t,prev)) parts.push("⟲ flip");
-        if(diff) parts.push(diff.l);
+        if(diff){
+          if(diff.physicalClash)
+            parts.push('<span style="color:#E05555;font-weight:600">⛔ PHYSICAL CLASH ('+diff.l+')</span>');
+          else parts.push(diff.l);
+        }
         if(compat) parts.push('<span style="color:'+cCol(compat)+'">'+compat+'</span>');
         if(pd) parts.push(pd.high
           ?'<span class="pdrift-warn">⚡ '+pd.sign+pd.pct+'%</span>'
           :'<span class="pdrift-ok">'+pd.sign+pd.pct+'%</span>');
+        // Vibe fracture warning in set panel
+        const vf=prev&&t?vibeFracture(prev,t):null;
+        if(vf) parts.push(vf.severe
+          ?'<span style="color:#E05555;font-weight:600">💥 VIBE FRACTURE (Δ'+vf.delta+' energy)</span>'
+          :'<span style="color:#E8A020">⚠ energy jump (Δ'+vf.delta+')</span>');
       }
       html+='<div class="bridge '+bc+'">'+parts.join(' · ')+'</div>';
     }
@@ -2451,7 +2522,8 @@ function attachMainEvents(){
     const src=pool.length?pool:allTracks().filter(t=>t.key&&t.bpm);
     if(!src.length){alert("No tracks with harmonic data found.");return;}
     const anyFilter=S.roleFilters.size>0||S.genreFilters.size>0||S.styleFilters.size>0||S.decadeFilters.size>0;
-    const size=Math.min(anyFilter?30:20,src.length);
+    // Spec: 10-track journey by default; expand to 20 when filters narrow the crate
+    const size=Math.min(anyFilter?20:10,src.length);
     const set=engine1BuildSet(src,size);
     if(!set.length){alert("Could not build a set. Try fewer filters.");return;}
     S.djSet=set;S.tab="set";updateTabBtns();updateRightPanel();updateRecordList();
