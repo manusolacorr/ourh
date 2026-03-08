@@ -210,6 +210,7 @@ button.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours
 .si:hover{border-color:var(--border-strong);box-shadow:0 2px 8px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.08)}
 .si.dragging{opacity:0.45;border-style:dashed}
 .si.drag-over{border-color:var(--accent2);background:rgba(139,92,246,0.06)}
+.si.x2-bridge{border-left:2px solid #E8A020}
 .si-stripe{width:4px;flex-shrink:0}
 .si-body{flex:1;min-width:0;padding:0.38rem 0.55rem}
 .si-top{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.14rem}
@@ -2347,6 +2348,8 @@ function updateSetPanel(){
         if(diff){
           if(diff.physicalClash)
             parts.push('<span style="color:#E05555;font-weight:600">⛔ PHYSICAL CLASH ('+diff.l+')</span>');
+          else if(diff.l==="×2 bridge")
+            parts.push('<span style="color:#E8A020;font-weight:600">⚡ ×2 bridge — tempo leap</span>');
           else parts.push(diff.l);
         }
         if(compat) parts.push('<span style="color:'+cCol(compat)+'">'+compat+'</span>');
@@ -2371,7 +2374,8 @@ function updateSetPanel(){
       }
     }
     const role=roleOf(t);
-    html+='<div class="si" draggable="true" data-si="'+i+'">'
+    const isX2=(i>0&&bpmBridge(S.djSet[i-1].bpm,t.bpm)?.l==="×2 bridge");
+    html+='<div class="si'+( isX2 ?' x2-bridge' : '')+'" draggable="true" data-si="'+i+'">'
       +'<div class="si-stripe" style="background:'+role.color+'"></div>'
       +'<div class="si-body">'
         +'<div class="si-top">'
