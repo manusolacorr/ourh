@@ -1903,6 +1903,7 @@ const S = {
   editLog:[],            // [{type,trackId,fromPos,toPos,ts}]
   personalWeights:{keyCompat:1,genreMatch:1,energyJump:1,roleRegress:1},
   narrativeCache:null,   // {setHash, text} — cached AI narrative
+  setLocked:false,        // if true, Auto-Suggest + Clear are disabled
   listen:{trackId:null,state:"idle",result:null,trackTitle:""},
 };
 const PAGE=30;
@@ -1992,7 +1993,8 @@ function updateTabBtns(){
     // Smart Sort always visible; XLS + Clear only when set has tracks
     btnWrap.innerHTML='<button class="set-engine-btn" id="engine2-btn"><i data-lucide="sparkles" class="sm"></i> Smart Sort</button>'
       +(S.djSet.length ? '<button class="btn sec sm" id="export-set-btn" style="font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button>' : "")
-      +(S.djSet.length ? '<button class="btn sec sm" id="clear-btn"><i data-lucide="x" class="sm"></i> Clear</button>' : "");
+      +(S.djSet.length ? '<button id="lock-btn" title="'+(S.setLocked?'Unlock set — allow Auto-Suggest to replace it':'Lock set — browse freely without losing it')+'" style="background:'+(S.setLocked?'var(--accent2)':'transparent')+';border:1px solid '+(S.setLocked?'var(--accent2)':'var(--border)')+';color:'+(S.setLocked?'#fff':'var(--muted)')+';cursor:pointer;font-size:0.62rem;padding:0.18rem 0.44rem;border-radius:5px;font-family:inherit;transition:all 120ms;display:flex;align-items:center;gap:0.25rem">'+(S.setLocked?'🔒':'🔓')+'</button>' : "")
+      +(S.djSet.length ? '<button class="btn sec sm" id="clear-btn" '+(S.setLocked?'disabled style="opacity:0.35;cursor:not-allowed"':'')+' ><i data-lucide="x" class="sm"></i> Clear</button>' : "");
     if(typeof lucide!=='undefined') lucide.createIcons();
   }
 }
@@ -3025,12 +3027,12 @@ function renderMainHTML(){
     +'<div class="left-panel">'
       +'<div class="ph"><span class="ptitle">Library</span><span class="badge" id="col-badge">—</span><button class="btn sec sm" id="export-lib-btn" style="margin-left:auto;font-size:0.52rem;padding:0.14rem 0.55rem"><i data-lucide="download" class="sm"></i> XLS</button></div>'
       +'<div class="engine-bar">'
-        +'<button class="engine-btn" id="engine1-btn">'
+        +'<button class="engine-btn" id="engine1-btn" '+(S.setLocked&&S.djSet.length?'style="opacity:0.45;cursor:not-allowed"':'')+'>'
           +'<span class="eb-icon"><i data-lucide="wand-2" style="width:1rem;height:1rem;color:var(--accent)"></i></span>'
           +'<span><span class="eb-title">Auto-Suggest Set</span><span class="eb-sub">Harmonic set · respects active filters + roles</span></span>'
         +'</button>'
         +'<button id="max1-toggle" title="Max 1 track per release" style="background:transparent;border:1px solid '+(S.maxOnePerRelease?'var(--accent2)':'var(--border)')+';color:'+(S.maxOnePerRelease?'var(--accent2)':'var(--muted)')+';cursor:pointer;font-size:0.46rem;padding:0.18rem 0.42rem;border-radius:3px;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:all 120ms">1×EP</button>'        +'<button id="x2-toggle" title="Allow ×2 tempo bridge in Auto-Suggest" style="background:transparent;border:1px solid '+(S.allowX2Bridge?'var(--orange)':'var(--border)')+';color:'+(S.allowX2Bridge?'var(--orange)':'var(--muted)')+';cursor:pointer;font-size:0.46rem;padding:0.18rem 0.42rem;border-radius:3px;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:all 120ms">×2</button>'      +'</div>'      +'<div style="display:flex;gap:0.22rem;padding:0.14rem 0.6rem 0.28rem;flex-shrink:0">'        +'<span style="font-size:0.46rem;color:var(--muted);align-self:center;flex-shrink:0">Slot:</span>'        +(function(){const slots=[['opening','Opening'],['peak','Peak'],['afterhours','After-Hours']];return slots.map(function(sv){const s=sv[0],l=sv[1];const active=S.slotType===s;return '<button class="slot-btn" data-slot="'+s+'" style="background:'+(active?'var(--accent2)':'transparent')+';border:1px solid '+(active?'var(--accent2)':'var(--border)')+';color:'+(active?'#fff':'var(--muted)')+';cursor:pointer;font-size:0.44rem;padding:0.12rem 0.38rem;border-radius:3px;font-family:inherit;white-space:nowrap;transition:all 120ms">'+l+'</button>';}).join('');})()
-      +'</div>'      +'<div class="search-wrap">'
+      +'</div>'      +'<div class="search-wrap">'+(S.setLocked&&S.djSet.length?'<div style="font-size:0.5rem;color:var(--accent2);background:rgba(112,70,190,0.1);border:1px solid var(--accent2);border-radius:4px;padding:0.18rem 0.55rem;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.35rem">🔒 Set locked — browse freely, use + Set to swap tracks. Click 🔓 to rebuild.</div>':'')
         +'<input id="search-input" placeholder="Search track, artist, key, BPM, genre, position…" value="'+esc(S.search)+'" autocomplete="off" spellcheck="false"/>'
         +'<div class="search-hint">Filters stack: Role + Genre + Style + Decade + search all apply together</div>'
       +'</div>'
@@ -3204,6 +3206,7 @@ function attachMainEvents(){
     const tp=Math.ceil(filteredTracks().length/PAGE);S.page=Math.min(tp,S.page+1);updateRecordList();
   });
   document.getElementById("engine1-btn")?.addEventListener("click",()=>{
+    if(S.setLocked&&S.djSet.length){alert('Set is locked. Click 🔓 to unlock before building a new set.');return;}
     const pool=filteredTracks().filter(t=>t.key&&t.bpm);
     const src=pool.length?pool:allTracks().filter(t=>t.key&&t.bpm);
     if(!src.length){alert("No tracks with harmonic data found.");return;}
@@ -3348,7 +3351,7 @@ function handleGlobalClick(e){
     return;
   }
   // Clear set
-  if(e.target.id==="clear-btn"){S.djSet=[];updateRecordList();updateTabBtns();updateRightPanel();}
+  if(e.target.id==="clear-btn"){if(S.setLocked)return;S.djSet=[];updateRecordList();updateTabBtns();updateRightPanel();}
   // Excel exports
   if(e.target.id==="export-lib-btn") exportLibraryXLS();
   if(e.target.id==="export-set-btn") exportSetXLS();
