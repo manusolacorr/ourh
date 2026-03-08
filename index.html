@@ -188,6 +188,20 @@ button.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours
 .bridge::before,.bridge::after{content:'';height:1px;background:var(--border);flex:1}
 .bridge.ok{color:var(--green)}
 .bridge.warn{color:var(--red)}
+.bridge-btn{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:0.48rem;padding:0.08rem 0.32rem;border-radius:3px;font-family:inherit;transition:all 120ms;white-space:nowrap;flex-shrink:0}
+.bridge-btn:hover{border-color:#7EB8F7;color:#7EB8F7}
+.bridge-btn.open{border-color:#7EB8F7;color:#7EB8F7;background:rgba(126,184,247,0.08)}
+.bridge-panel{background:var(--surface2,#1a1a2e);border:1px solid var(--border);border-radius:6px;padding:0.48rem 0.56rem;margin:0.12rem 0.4rem 0.24rem;display:flex;flex-direction:column;gap:0.32rem}
+.bridge-panel-title{font-size:0.46rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.16rem}
+.bridge-cand{display:flex;align-items:center;gap:0.4rem;padding:0.28rem 0.4rem;border-radius:4px;background:var(--bg);border:1px solid var(--border)}
+.bridge-cand:hover{border-color:var(--accent2)}
+.bridge-cand-body{flex:1;min-width:0}
+.bridge-cand-title{font-size:0.56rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bridge-cand-meta{font-size:0.44rem;color:var(--muted);margin-top:0.06rem;display:flex;gap:0.32rem;flex-wrap:wrap}
+.bridge-cand-compat{font-size:0.42rem;display:flex;gap:0.24rem;flex-wrap:wrap}
+.bridge-insert-btn{background:var(--accent2);color:#fff;border:none;cursor:pointer;font-size:0.48rem;padding:0.18rem 0.44rem;border-radius:3px;font-family:inherit;white-space:nowrap;flex-shrink:0;font-weight:600}
+.bridge-insert-btn:hover{filter:brightness(1.15)}
+.bridge-empty{font-size:0.5rem;color:var(--muted);text-align:center;padding:0.6rem}
 /* Pitch drift */
 .pdrift-warn{font-size:0.47rem;font-weight:600;color:var(--red);background:rgba(229,83,83,0.1);border:1px solid rgba(229,83,83,0.2);border-radius:3px;padding:0.02rem 0.24rem}
 .pdrift-ok{font-size:0.47rem;color:var(--muted)}
@@ -1909,6 +1923,53 @@ function renderTrackRow(t){
 }
 
 
+
+// ═══════════════════════════════════════════════════════
+//  THE BRIDGE — find harmonic bridge tracks between two set positions
+// ═══════════════════════════════════════════════════════
+function findBridgeTracks(a, b){
+  // score compat quality: perfect=4, compatible=3, close=2, null=1, clash=0
+  function compatScore(k1,k2){
+    const c=camCompat(k1,k2);
+    return c==="perfect"?4:c==="compatible"?3:c==="close"?2:c===null?1:0;
+  }
+  const inSetIds=new Set(S.djSet.map(t=>t.id));
+  const cands=allTracks().filter(t=>{
+    if(inSetIds.has(t.id)) return false;            // already in set
+    if(!t.bpm||!t.key) return false;                // need both
+    if(isVinylBlocked(t,a)||isVinylBlocked(t,b)) return false; // same side
+    if(isPhysicalClash(a,t)||isPhysicalClash(t,b)) return false; // BPM wall
+    const ca=camCompat(a.key,t.key);
+    const cb=camCompat(t.key,b.key);
+    if(ca==="clash"||cb==="clash") return false;    // must bridge both
+    return true;
+  });
+  return cands.map(t=>{
+    const ca=camCompat(a.key,t.key);
+    const cb=camCompat(t.key,b.key);
+    const ba=bpmBridge(a.bpm,t.bpm);
+    const bb=bpmBridge(t.bpm,b.bpm);
+    // score: key compat both ways + BPM smoothness
+    let score=compatScore(a.key,t.key)*20+compatScore(t.key,b.key)*20;
+    if(ba&&!ba.physicalClash) score+=15;
+    if(bb&&!bb.physicalClash) score+=15;
+    // prefer BPM between the two tracks
+    if(a.bpm&&b.bpm&&t.bpm>=Math.min(a.bpm,b.bpm)&&t.bpm<=Math.max(a.bpm,b.bpm)) score+=10;
+    return {t, ca, cb, ba, bb, score};
+  }).sort((x,y)=>y.score-x.score).slice(0,5);
+}
+
+function renderBridgePanel(insertIdx, a, b){
+  const cands=findBridgeTracks(a,b);
+  if(!cands.length) return '<div class="bridge-empty">No bridge tracks found in crate — try a different filter or add more records.</div>';
+  function compatLabel(c){ return c==="perfect"?"✦ perfect":c==="compatible"?"✓ compatible":c==="close"?"≈ close":""; }
+  function compatColor(c){ return c==="perfect"?"#6EE7B7":c==="compatible"?"#7EB8F7":c==="close"?"#FDA4AF":"var(--muted)"; }
+  return cands.map(({t,ca,cb,ba,bb})=>{
+    const role=roleOf(t);
+    return '<div class="bridge-cand">'      +'<div class="bridge-cand-body">'        +'<div class="bridge-cand-title">'+esc(t.title)+'</div>'        +'<div class="bridge-cand-meta">'          +'<span>'+esc(t.releaseArtist)+'</span>'          +(t.bpm?'<span>'+t.bpm+' BPM</span>':'')          +(t.key?'<span>'+t.key+'·'+(CAM[t.key]?.n||"")+'</span>':'')          +'<span style="color:'+role.color+'">'+role.label+'</span>'        +'</div>'        +'<div class="bridge-cand-compat">'          +(ca?'<span style="color:'+compatColor(ca)+'">'+esc(a.title)+' → '+compatLabel(ca)+'</span>':'')          +(cb?'<span style="color:'+compatColor(cb)+'">'+compatLabel(cb)+' → '+esc(b.title)+'</span>':'')        +'</div>'      +'</div>'      +'<button class="bridge-insert-btn" data-bridge-insert="'+insertIdx+'|'+esc(t.id)+'">Insert</button>'    +'</div>';
+  }).join("");
+}
+
 // ═══════════════════════════════════════════════════════
 //  SET PANEL
 // ═══════════════════════════════════════════════════════
@@ -1949,7 +2010,16 @@ function updateSetPanel(){
           ?'<span style="color:#E05555;font-weight:600">💥 VIBE FRACTURE (Δ'+vf.delta+' energy)</span>'
           :'<span style="color:#E8A020">⚠ energy jump (Δ'+vf.delta+')</span>');
       }
-      html+='<div class="bridge '+bc+'">'+parts.join(' · ')+'</div>';
+      const isClash=!sameSd&&compat==="clash";
+      const bridgeOpen=S.bridgeOpen===i;
+      html+='<div class="bridge '+bc+'" data-bridge-row="'+i+'">'+parts.join(' · ')
+        +(isClash?'<button class="bridge-btn'+(bridgeOpen?' open':'')+'" data-bridge-btn="'+i+'" title="Find a bridge track to smooth this key clash">🌉 Bridge</button>':'')      +'</div>';
+      if(isClash&&bridgeOpen){
+        html+='<div class="bridge-panel" id="bridge-panel-'+i+'">'
+          +'<div class="bridge-panel-title">🌉 Bridge tracks — inserted between #'+i+' and #'+(i+1)+'</div>'
+          +renderBridgePanel(i,prev,t)
+          +'</div>';
+      }
     }
     const role=roleOf(t);
     html+='<div class="si" draggable="true" data-si="'+i+'">'
@@ -2609,6 +2679,29 @@ function handleGlobalClick(e){
     if(mv.dataset.mv==="up"&&idx>0)[arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
     else if(mv.dataset.mv==="dn"&&idx<arr.length-1)[arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
     S.djSet=arr;updateSetPanel();updateTabBtns();return;
+  }
+  // Bridge panel toggle
+  const bb2=e.target.closest(".bridge-btn[data-bridge-btn]");
+  if(bb2){
+    const idx=parseInt(bb2.dataset.bridgeBtn);
+    S.bridgeOpen=(S.bridgeOpen===idx)?null:idx;
+    updateSetPanel();
+    return;
+  }
+  // Bridge insert — splice track between positions
+  const bi=e.target.closest(".bridge-insert-btn[data-bridge-insert]");
+  if(bi){
+    const [idxStr,tid]=bi.dataset.bridgeInsert.split("|");
+    const idx=parseInt(idxStr);
+    const track=allTracks().find(t=>t.id===tid);
+    if(track){
+      const arr=[...S.djSet];
+      arr.splice(idx,0,track);
+      S.djSet=arr;
+      S.bridgeOpen=null;
+      updateRecordList();updateTabBtns();updateSetPanel();
+    }
+    return;
   }
   // Clear set
   if(e.target.id==="clear-btn"){S.djSet=[];updateRecordList();updateTabBtns();updateRightPanel();}
