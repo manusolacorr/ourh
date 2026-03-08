@@ -2574,27 +2574,72 @@ function invalidateNarrative(){ S.narrativeCache=null; }
 function crateGapAnalysis(){
   const tracks=allTracks().filter(t=>t.key&&t.bpm);
   if(tracks.length<5) return [];
-  // BPM buckets: warmup (<115), midset (115-130), peak (130+)
   const buckets={warmup:[55,115],midset:[115,130],peak:[130,200]};
-  const gaps=[];
-  // For each Camelot key × role bucket, count tracks
+
+  // ── Step 1: build coverage map ─────────────────────────────────────────
   const coverage={};
   tracks.forEach(t=>{
     const role=Object.entries(buckets).find(([,r])=>t.bpm>=r[0]&&t.bpm<r[1])?.[0]||'peak';
-    const k=`${t.key}|${role}`;
+    const k=t.key+'|'+role;
     coverage[k]=(coverage[k]||0)+1;
   });
-  // Flag missing or sparse cells
+
+  // ── Step 2: compute collection's key affinity ──────────────────────────
+  // Count how many tracks we already have per Camelot key number (1-12),
+  // ignoring mode (A/B). Keys where we have ≥1 track in at least one mode
+  // are "active" — gaps in those keys are relevant.
+  const keyNumActivity={}; // e.g. {'8':12, '9':8, ...}
+  tracks.forEach(t=>{
+    const num=parseInt(t.key);
+    if(num) keyNumActivity[num]=(keyNumActivity[num]||0)+1;
+  });
+  const totalTracks=tracks.length||1;
+  // Activity score 0–1 for each key number
+  const keyActivity=n=>(keyNumActivity[n]||0)/totalTracks;
+
+  // ── Step 3: score each gap by relevance ────────────────────────────────
+  // Relevance = how close this gap is to keys we already use a lot.
+  // Camelot wheel is circular 1-12; neighbours are ±1.
+  // A missing 7B is more relevant if we have 8B and 6B tracks.
+  const allNums=Object.keys(CAM).map(k=>parseInt(k));
+  function neighbourActivity(num){
+    const prev=((num-2+12)%12)+1;
+    const next=(num%12)+1;
+    return (keyActivity(num)*2 + keyActivity(prev) + keyActivity(next))/4;
+  }
+
+  // Role weights: gaps in roles where we have the most tracks are most relevant
+  const roleCounts={warmup:0,midset:0,peak:0};
+  tracks.forEach(t=>{
+    const role=Object.entries(buckets).find(([,r])=>t.bpm>=r[0]&&t.bpm<r[1])?.[0]||'peak';
+    roleCounts[role]++;
+  });
+  const maxRoleCount=Math.max(...Object.values(roleCounts))||1;
+  const roleWeight=role=>(roleCounts[role]||0)/maxRoleCount;
+
+  // ── Step 4: collect and rank gaps ─────────────────────────────────────
+  const gaps=[];
   Object.keys(CAM).forEach(key=>{
+    const num=parseInt(key);
     Object.entries(buckets).forEach(([role])=>{
-      const count=coverage[`${key}|${role}`]||0;
-      if(count===0) gaps.push({key,role,count,severe:true});
-      else if(count===1) gaps.push({key,role,count,severe:false});
+      const count=coverage[key+'|'+role]||0;
+      if(count>=2) return; // well covered — skip
+      const activity=neighbourActivity(num);
+      const rw=roleWeight(role);
+      // Relevance: high if we already play in this key neighbourhood + role
+      const relevance=activity*0.7+rw*0.3;
+      // Only surface gaps that are actually relevant to how we DJ
+      if(relevance<0.06) return; // too far from our style
+      const severe=count===0;
+      gaps.push({key,role,count,severe,relevance});
     });
   });
-  // Group by role, sort by severity
-  gaps.sort((a,b)=>(b.severe?1:0)-(a.severe?1:0)||(a.role.localeCompare(b.role)));
-  // Return top 6 most critical gaps
+
+  // Sort: severe first, then by relevance descending
+  gaps.sort((a,b)=>{
+    if(b.severe!==a.severe) return (b.severe?1:0)-(a.severe?1:0);
+    return b.relevance-a.relevance;
+  });
   return gaps.slice(0,6);
 }
 
