@@ -1424,7 +1424,7 @@ function updateEnrichBar(){
 
 // ── Enrichment Diagnostics ────────────────────────────────────────────────
 async function runEnrichDiagnostics(){
-  const track = allTracks().find(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
+  const track = allTracks().find(t=>(t.bpmSource!=="enriched"&&t.bpmSource!=="essentia")||(t.keySource!=="enriched"&&t.keySource!=="essentia"));
   if(!track){ alert("All tracks already enriched!"); return; }
 
   const modal = document.getElementById("diag-modal");
@@ -1486,7 +1486,7 @@ async function enrichCollection(releases){
 }
 
 async function enrichTrack(track){
-  if(track.bpmSource==="enriched"&&track.keySource==="enriched") return;
+  if((track.bpmSource==="enriched"||track.bpmSource==="essentia")&&(track.keySource==="enriched"||track.keySource==="essentia")) return;
 
   const artist=(track.trackArtist||track.releaseArtist||"").trim();
   const title=(track.title||"").trim();
@@ -1498,10 +1498,10 @@ async function enrichTrack(track){
   function applyResult(res){
     if(!res) return false;
     let got=false;
-    if(res.bpm&&res.bpm>40&&res.bpm<220&&track.bpmSource!=="enriched"){
+    if(res.bpm&&res.bpm>40&&res.bpm<220&&track.bpmSource!=="enriched"&&track.bpmSource!=="essentia"){
       track.bpm=Math.round(res.bpm); track.bpmSource="enriched"; got=true;
     }
-    if(res.key&&CAM[res.key]&&track.keySource!=="enriched"){
+    if(res.key&&CAM[res.key]&&track.keySource!=="enriched"&&track.keySource!=="essentia"){
       track.key=res.key; track.keySource="enriched"; got=true;
     }
     // Genre/style enrichment from shops
@@ -1516,8 +1516,8 @@ async function enrichTrack(track){
     return got;
   }
 
-  const needsBpm = track.bpmSource!=="enriched";
-  const needsKey = track.keySource!=="enriched";
+  const needsBpm = track.bpmSource!=="enriched"&&track.bpmSource!=="essentia";
+  const needsKey = track.keySource!=="enriched"&&track.keySource!=="essentia";
   if(!needsBpm&&!needsKey) return;
 
   // ── SOURCE 0: Discogs notes (free — already in our data) ─────────────
@@ -1935,7 +1935,9 @@ function renderTrackRow(t){
   const role=roleOf(t);
   const isIn=inSet(t.id);
   const bpmEnr=t.bpmSource==="enriched";
+  const bpmEss=t.bpmSource==="essentia";
   const keyEnr=t.keySource==="enriched";
+  const keyEss=t.keySource==="essentia";
   const artistDiff=t.trackArtist&&t.trackArtist!==t.releaseArtist;
   const rolesHtml=Object.values(ROLES).map(ro=>{
     const act=assignRole(t)===ro.id;
@@ -1951,8 +1953,8 @@ function renderTrackRow(t){
       +'</div>'
       +'<div class="tr-meta">'
         +'<span class="role-pill" style="color:'+role.color+';--rc:'+role.color+'"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+role.color+';margin-right:0.18rem;flex-shrink:0;vertical-align:middle"></span>'+role.label+'</span>'
-        +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM'+(bpmEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
-        +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+(keyEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
+        +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM'+(bpmEss?'<span class="tag-chip ess">✦</span>':bpmEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
+        +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+(keyEss?'<span class="tag-chip ess">✦</span>':keyEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
         +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
         +(t.incomplete?'<span class="tag-chip" style="opacity:0.5">⚠ partial</span>':'')
       +'</div>'
@@ -2238,7 +2240,7 @@ function updateListenBar(){
   } else if(ls.state==='error'){
     bodyHtml='<div class="lb-error">⚠ '+esc(ls.errorMsg||'Error')+'</div>'
       +'<div class="lb-actions" style="margin-top:0.4rem">'
-        +'<button class="lb-discard-btn" id="listen-discard-btn">Close</button>'
+        +'<button class="lb-discard-btn" id="listen-close-err-btn">Close</button>'
       +'</div>';
   }
 
@@ -2866,7 +2868,7 @@ function attachMainEvents(){
     btn.addEventListener("mouseleave", ()=>clearTimeout(pressTimer));
     btn.addEventListener("click",()=>{
       if(enrichStats.running) return;
-      const toEnrich=allTracks().filter(t=>t.bpmSource!=="enriched"||t.keySource!=="enriched");
+      const toEnrich=allTracks().filter(t=>(t.bpmSource!=="enriched"&&t.bpmSource!=="essentia")||(t.keySource!=="enriched"&&t.keySource!=="essentia"));
       if(!toEnrich.length){alert("All tracks already enriched!");return;}
       enrichCollection(S.releases);
     });
@@ -3011,7 +3013,7 @@ function handleGlobalClick(e){
   if(listenBtn){ startListen(listenBtn.dataset.listen); return; }
   if(e.target.id==='listen-stop-btn'){ stopListen(); return; }
   if(e.target.id==='listen-apply-btn'){ applyListenResult(); return; }
-  if(e.target.id==='listen-discard-btn'||e.target.id==='listen-close-btn'){
+  if(e.target.id==='listen-discard-btn'||e.target.id==='listen-close-btn'||e.target.id==='listen-close-err-btn'){
     cleanupListen();
     S.listen={trackId:null,state:'idle',result:null,trackTitle:''};
     updateListenBar(); updateRecordList(); return;
