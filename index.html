@@ -833,6 +833,23 @@ function engine1BuildSet(pool, targetSize=20){
       s+=roleArcBonus(t, pos);
       scored.push({t,s});
     }
+    // If hasExit guard killed the pool, retry without it (narrow crate fallback)
+    if(!scored.length){
+      for(const t of eligible){
+        if(used.has(t.id)) continue;
+        if(isVinylBlocked(last,t)) continue;
+        if(isPhysicalClash(last,t)) continue;
+        const releaseLimit=S.maxOnePerRelease?1:2;
+        if(set.filter(s=>s.releaseId===t.releaseId).length>=releaseLimit) continue;
+        const compat=camCompat(last.key,t.key);
+        if(compat==="clash"&&pos<0.25) continue;
+        if(compat==="clash"&&pos>0.80) continue;
+        let s=transitionScore(last,t,context);
+        s+=Math.max(0, 40-Math.abs(t.bpm-target)*1.5);
+        s+=roleArcBonus(t, pos);
+        scored.push({t,s});
+      }
+    }
     if(!scored.length) break;
     scored.sort((a,b)=>b.s-a.s);
     const topN=scored.slice(0,Math.min(3,scored.length));
