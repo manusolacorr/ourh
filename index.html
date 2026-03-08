@@ -662,7 +662,11 @@ function transitionScore(a, b, context={}){
   else                           score-=300;
   if(bridge?.ok){
     const d=Math.abs((a.bpm||0)-(b.bpm||0));
-    score+=Math.max(0, 70-d*5);
+    const base=Math.max(0, 70-d*5);
+    // ×2 bridge: harmonically valid but practically a huge tempo leap.
+    // Penalise heavily so engine only picks it when truly stuck.
+    const x2Penalty=(bridge.l==="×2 bridge")?-180:0;
+    score+=base+x2Penalty;
   } else { score-=120; }
   if(sameRecord(a,b)) score-=150;
   const cg=(a.genres||[]).filter(g=>(b.genres||[]).includes(g)).length;
@@ -934,16 +938,30 @@ function setSuggestions(set){
   for(let i=1;i<set.length;i++){
     const p=set[i-1],c=set[i];
     const compat=camCompat(p.key,c.key),diff=bpmBridge(p.bpm,c.bpm);
-    if(sameSide(p,c)) out.push(`🛑 ${i}→${i+1}: Same vinyl side (${p.releaseTitle} ${p.pos}/${c.pos}) — physically impossible!`);
-    else if(sameRecord(p,c)) out.push(`⟲ ${i}→${i+1}: Same record (${p.releaseTitle}) — flip required.`);
-    if(compat==="clash"&&!sameSide(p,c)) out.push(`⚠️ ${i}→${i+1}: Key clash (${p.key}→${c.key}). Use a breakdown.`);
-    if(diff?.physicalClash&&!sameSide(p,c)) out.push(`⛔ ${i}→${i+1}: PHYSICAL CLASH (${diff.l}) — exceeds Technics ±8% fader range.`);
-    else if(diff&&!diff.ok&&!sameSide(p,c)) out.push(`🔀 ${i}→${i+1}: ${diff.l}. Bridge with percussion.`);
+    const pd=pitchDrift(p.bpm,c.bpm);
     const vf=vibeFracture(p,c);
-    if(vf&&!sameSide(p,c)) out.push(vf.severe?`💥 ${i}→${i+1}: Severe vibe fracture (Δ${vf.delta} energy points).`:`⚠️ ${i}→${i+1}: Energy jump (Δ${vf.delta} pts) — consider a bridge track.`);
-    if(compat==="perfect"&&diff?.ok) out.push(`✨ ${i}→${i+1}: Perfect — let it ride.`);
-    const pd=pitchDrift(p.bpm,c.bpm);if(pd?.high)out.push(`⚡ ${i}→${i+1}: High pitch drift (${pd.sign}${pd.pct}%) — turntable strain.`);
-    if(compat==="compatible"&&diff?.ok) out.push(`💚 ${i}→${i+1}: Clean harmonic flow.`);
+    // ── One consolidated note per transition ────────────────────────────
+    const flags=[];
+    // Blockers first
+    if(sameSide(p,c)){
+      out.push(`🛑 ${i}→${i+1}: Same vinyl side (${p.releaseTitle} ${p.pos}/${c.pos}) — physically impossible!`);
+      continue;
+    }
+    if(sameRecord(p,c)) flags.push('⟲ flip');
+    if(diff?.physicalClash) flags.push(`⛔ PHYSICAL CLASH (${diff.l})`);
+    else if(diff&&!diff.ok) flags.push(`🔀 ${diff.l} — bridge with percussion`);
+    else if(diff?.l==='×2 bridge') flags.push('⚡×2 tempo leap');
+    if(compat==='clash') flags.push(`⚠ key clash (${p.key}→${c.key})`);
+    if(vf) flags.push(vf.severe?`💥 vibe fracture (Δ${vf.delta})`:`⚡ energy jump (Δ${vf.delta})`);
+    if(pd?.high) flags.push(`⚡ pitch drift (${pd.sign}${pd.pct}%) — turntable strain`);
+    // Positive signals
+    const isClean=!diff?.physicalClash&&diff?.ok&&compat!=='clash'&&!vf;
+    if(isClean){
+      if(compat==='perfect')     flags.push('✨ Perfect — let it ride');
+      else if(compat==='compatible') flags.push('💚 Clean harmonic flow');
+      else if(compat==='close')  flags.push('〰 Close key');
+    }
+    if(flags.length) out.push(`${i}→${i+1}: ${flags.join(' · ')}`);
   }
   const bpms=set.map(t=>t.bpm).filter(Boolean);
   if(bpms.length>1){
