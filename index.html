@@ -676,7 +676,7 @@ function transitionScore(a, b, context={}){
   }
   if(context.usedReleases){
     const totalTimes=context.usedReleases.filter(id=>id===b.releaseId).length;
-    if(totalTimes>=2) score-=300;
+    if(totalTimes>=2) score-=500; // raised from -300: full-EP suggestions were slipping through
   }
   if(a.bpm&&b.bpm){
     const delta=b.bpm-a.bpm;
@@ -814,7 +814,8 @@ function engine1BuildSet(pool, targetSize=20){
       if(used.has(t.id)) continue;
       if(isVinylBlocked(last,t)) continue;
       if(isPhysicalClash(last,t)) continue; // block all ±8% violations
-      if(set.filter(s=>s.releaseId===t.releaseId).length>=2) continue;
+      const releaseLimit=S.maxOnePerRelease?1:2;
+      if(set.filter(s=>s.releaseId===t.releaseId).length>=releaseLimit) continue;
       const compat=camCompat(last.key,t.key);
       if(compat==="clash"&&pos<0.25) continue;
       if(compat==="clash"&&pos>0.80) continue;
@@ -875,7 +876,8 @@ function engine2SortSet(tracks){
     while(rem.length>0){
       const last=sorted[sorted.length-1];
       const context={recentReleases:recentWindow(sorted,6),usedReleases:sorted.map(t=>t.releaseId)};
-      let cands=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash");
+      const relLim=S.maxOnePerRelease?1:2;
+      let cands=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash"&&sorted.filter(s=>s.releaseId===t.releaseId).length<relLim);
       if(!cands.length) cands=rem.filter(t=>!isBlocked(last,t));
       if(!cands.length) cands=rem.filter(t=>!isPhysicalClash(last,t)); // relax key constraint but keep BPM safe
       if(!cands.length) cands=rem; // truly stuck — pool too small, accept clash
@@ -1772,6 +1774,7 @@ const S = {
   dragIdx:null, dragOverIdx:null,
   idbStatus:"empty", idbSavedAt:null,
   filterOpen:null,
+  maxOnePerRelease:false,
   listen:{trackId:null,state:"idle",result:null,trackTitle:""},
 };
 const PAGE=30;
@@ -2747,6 +2750,7 @@ function renderMainHTML(){
           +'<span class="eb-icon"><i data-lucide="wand-2" style="width:1rem;height:1rem;color:var(--accent)"></i></span>'
           +'<span><span class="eb-title">Auto-Suggest Set</span><span class="eb-sub">Harmonic set · respects active filters + roles</span></span>'
         +'</button>'
+        +'<button id="max1-toggle" title="Max 1 track per release" style="background:transparent;border:1px solid '+(S.maxOnePerRelease?'var(--accent2)':'var(--border)')+';color:'+(S.maxOnePerRelease?'var(--accent2)':'var(--muted)')+';cursor:pointer;font-size:0.46rem;padding:0.18rem 0.42rem;border-radius:3px;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:all 120ms">1×EP</button>'
       +'</div>'
       +'<div class="search-wrap">'
         +'<input id="search-input" placeholder="Search track, artist, key, BPM, genre, position…" value="'+esc(S.search)+'" autocomplete="off" spellcheck="false"/>'
@@ -3007,6 +3011,16 @@ function handleGlobalClick(e){
     if(mv.dataset.mv==="up"&&idx>0)[arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
     else if(mv.dataset.mv==="dn"&&idx<arr.length-1)[arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
     S.djSet=arr;updateSetPanel();updateTabBtns();return;
+  }
+  // Max-1-per-release toggle
+  if(e.target.id==='max1-toggle'){
+    S.maxOnePerRelease=!S.maxOnePerRelease;
+    const btn=document.getElementById('max1-toggle');
+    if(btn){
+      btn.style.borderColor=S.maxOnePerRelease?'var(--accent2)':' var(--border)';
+      btn.style.color=S.maxOnePerRelease?'var(--accent2)':' var(--muted)';
+    }
+    return;
   }
   // ── Listen feature ──
   const listenBtn=e.target.closest('.listen-btn[data-listen]');
