@@ -839,7 +839,8 @@ function engine2SortSet(tracks){
       const context={recentReleases:recentWindow(sorted,6),usedReleases:sorted.map(t=>t.releaseId)};
       let cands=rem.filter(t=>!isBlocked(last,t)&&camCompat(last.key,t.key)!=="clash");
       if(!cands.length) cands=rem.filter(t=>!isBlocked(last,t));
-      if(!cands.length) cands=rem;
+      if(!cands.length) cands=rem.filter(t=>!isPhysicalClash(last,t)); // relax key constraint but keep BPM safe
+      if(!cands.length) cands=rem; // truly stuck — pool too small, accept clash
       let best=cands[0],bestScore=-Infinity;
       for(const t of cands){const s=transitionScore(last,t,context);if(s>bestScore){bestScore=s;best=t;}}
       sorted.push(best);
