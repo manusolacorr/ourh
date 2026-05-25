@@ -227,6 +227,8 @@ button.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours
 .cosine-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.7rem;padding:0;line-height:1}
 .sl-btn{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:0.52rem;padding:0.14rem 0.36rem;border-radius:4px;font-family:inherit;transition:all 120ms;white-space:nowrap;flex-shrink:0}
 .sl-btn:hover,.sl-btn.active{border-color:#7EB8F7;color:#7EB8F7;background:rgba(126,184,247,0.07)}
+.tag-chip.est{color:var(--muted);border-color:rgba(255,255,255,0.08);font-style:italic;opacity:0.7}
+.tag-chip.bpm.est{color:#c96a1a}
 #dj-notes-sec p{margin:0 0 0.35rem;font-size:0.54rem;line-height:1.7}
 #narrative-out{white-space:pre-line}
 .si-stripe{width:4px;flex-shrink:0}
@@ -565,7 +567,7 @@ function guessBPM(genres=[],styles=[]){
 }
 
 function guessKey(uid){
-  return CAM_KEYS[Math.abs(uid*31+uid*7)%CAM_KEYS.length];
+  return null; // never invent a key — null means "unknown"
 }
 
 
@@ -597,6 +599,8 @@ function isVinylBlocked(a, b){ return sameSide(a, b); }
 // Physical clash = BPM exceeds ±8% of fader range — independent of key
 function isPhysicalClash(a, b){
   if(!a?.bpm||!b?.bpm) return false;
+  // Can't assess physical clash against a guessed BPM — real data only
+  if(a.bpmSource==='guess'||b.bpmSource==='guess') return false;
   return bpmBridge(a.bpm, b.bpm)?.physicalClash === true;
 }
 // Hard block = vinyl side conflict OR key clash WITH physical BPM clash
@@ -2111,8 +2115,10 @@ function renderTrackRow(t){
       +'</div>'
       +'<div class="tr-meta">'
         +'<span class="role-pill" style="color:'+role.color+';--rc:'+role.color+'"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+role.color+';margin-right:0.18rem;flex-shrink:0;vertical-align:middle"></span>'+role.label+'</span>'
-        +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM'+(bpmEss?'<span class="tag-chip ess">✦</span>':bpmEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
-        +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+(keyEss?'<span class="tag-chip ess">✦</span>':keyEnr?'<span class="tag-chip enr">✓</span>':'<span class="tag-chip enr">~</span>')+'</span>':'')
+        +(t.bpm?'<span class="tag-chip bpm'+((!bpmEnr&&!bpmEss)?' est':'')+'">'          +((!bpmEnr&&!bpmEss)?'~':'')+t.bpm+' BPM'          +(bpmEss?'<span class="tag-chip ess">✦</span>':bpmEnr?'<span class="tag-chip enr">✓</span>':'')          +'</span>':'')
+        +((t.key&&(keyEnr||keyEss))?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")
+          +(keyEss?'<span class="tag-chip ess">✦</span>':'<span class="tag-chip enr">✓</span>')
+          +'</span>':'<span class="tag-chip key est">? key</span>')
         +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
         +(t.incomplete?'<span class="tag-chip" style="opacity:0.5">⚠ partial</span>':'')
       +'</div>'
@@ -2554,10 +2560,12 @@ function updateSetPanel(){invalidateNarrative();
     const prev=S.djSet[i-1];
     if(i>0){
       const compat=camCompat(prev.key,t.key);
-      const diff=bpmBridge(prev.bpm,t.bpm);
-      const pd=pitchDrift(prev.bpm,t.bpm);
+      const prevBpmReal=prev.bpmSource&&prev.bpmSource!=='guess';
+      const tBpmReal=t.bpmSource&&t.bpmSource!=='guess';
+      const diff=(prevBpmReal&&tBpmReal)?bpmBridge(prev.bpm,t.bpm):null;
+      const pd=(prevBpmReal&&tBpmReal)?pitchDrift(prev.bpm,t.bpm):null;
       const sameSd=sameSide(t,prev);
-      const bc=sameSd?"warn":(!diff?.ok||compat==="clash")?"warn":"ok";
+      const bc=sameSd?"warn":(!diff?.ok||compat==="clash")?"warn":((!prevBpmReal||!tBpmReal)?"muted":"ok");
       const parts=[];
       if(sameSd) parts.push("🛑 same side — BLOCKED");
       else{
@@ -2604,8 +2612,10 @@ function updateSetPanel(){invalidateNarrative();
         +'<div class="si-artist">'+esc(t.releaseArtist)+' — '+esc(t.releaseTitle)+'</div>'
         +'<div class="si-tags">'
           +'<span class="role-pill" style="color:'+role.color+';--rc:'+role.color+'"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+role.color+';margin-right:0.18rem;flex-shrink:0;vertical-align:middle"></span>'+role.label+'</span>'
-          +(t.bpm?'<span class="tag-chip bpm">'+t.bpm+' BPM</span>':'')
-          +(t.key?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+'</span>':'')
+          +(t.bpm?'<span class="tag-chip bpm'+(t.bpmSource==="guess"?' est':'')+'">'
+            +(t.bpmSource==="guess"?'~':'')+t.bpm+' BPM</span>':'')
+          +((t.key&&t.keySource!=="guess")?'<span class="tag-chip key">'+t.key+'·'+(CAM[t.key]?.n||"")+'</span>'
+            :'<span class="tag-chip key est">? key</span>')
           +(t.duration?'<span class="tag-chip">'+esc(t.duration)+'</span>':'')
         +'</div>'
       +'</div>'
@@ -2789,6 +2799,12 @@ function updateAnalysisPanel(){
   const sS=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
   let html='<div class="aw">';
   // Stats
+  // Data quality warning
+  const guessedBpm=S.djSet.filter(t=>t.bpmSource==='guess').length;
+  const guessedKey=S.djSet.filter(t=>!t.key||t.keySource==='guess').length;
+  if(guessedBpm>0||guessedKey>0){
+    html+='<div class="asec" style="border-left:2px solid #c96a1a;padding-left:0.5rem">'      +'<div class="atitle" style="color:#c96a1a">⚠ Data Quality</div>'      +(guessedBpm?'<div class="srow"><span>Estimated BPM (~)</span><span style="color:#c96a1a">'+guessedBpm+' tracks</span></div>':'')      +(guessedKey?'<div class="srow"><span>Unknown key (? key)</span><span style="color:#c96a1a">'+guessedKey+' tracks</span></div>':'')      +'<div style="font-size:0.48rem;color:var(--muted);margin-top:0.25rem;line-height:1.6">Run Enrich BPM/Key to get real data. Estimated values are excluded from clash detection and harmonic scoring.</div>'    +'</div>';
+  }
   html+='<div class="asec"><div class="atitle">Set Stats</div>'
     +'<div class="srow"><span>Tracks</span><span>'+n+'</span></div>'
     +(avgBPM?'<div class="srow"><span>Avg BPM</span><span>'+avgBPM+'</span></div>':"")
