@@ -212,6 +212,21 @@ button.rbtn.act-afterhours{border-color:var(--afterhours);color:var(--afterhours
 .si.drag-over{border-color:var(--accent2);background:rgba(139,92,246,0.06)}
 .si.x2-bridge{border-left:2px solid #E8A020}
 .slot-btn:hover{border-color:var(--accent2)!important;color:var(--accent2)!important}
+.cosine-result{display:flex;align-items:flex-start;gap:0.5rem;padding:0.38rem 0;border-bottom:1px solid var(--border)}
+.cosine-result:last-child{border-bottom:none}
+.cosine-score{font-size:0.44rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:0.08rem 0.28rem;white-space:nowrap;flex-shrink:0}
+.cosine-score.high{color:#7EB8F7;border-color:#7EB8F7}
+.cosine-result-body{flex:1;min-width:0}
+.cosine-result-title{font-size:0.56rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cosine-result-artist{font-size:0.48rem;color:var(--muted);margin-top:0.06rem}
+.cosine-links{display:flex;gap:0.3rem;margin-top:0.12rem;flex-wrap:wrap}
+.cosine-link{font-size:0.44rem;color:var(--accent);border:1px solid var(--border);border-radius:3px;padding:0.06rem 0.28rem;text-decoration:none;white-space:nowrap}
+.cosine-link:hover{border-color:var(--accent);background:rgba(112,70,190,0.08)}
+.cosine-panel{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.6rem;margin-top:0.4rem}
+.cosine-panel-title{font-size:0.52rem;font-weight:600;color:var(--text);margin-bottom:0.35rem;display:flex;align-items:center;justify-content:space-between}
+.cosine-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.7rem;padding:0;line-height:1}
+.sl-btn{background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:0.52rem;padding:0.14rem 0.36rem;border-radius:4px;font-family:inherit;transition:all 120ms;white-space:nowrap;flex-shrink:0}
+.sl-btn:hover,.sl-btn.active{border-color:#7EB8F7;color:#7EB8F7;background:rgba(126,184,247,0.07)}
 #dj-notes-sec p{margin:0 0 0.35rem;font-size:0.54rem;line-height:1.7}
 #narrative-out{white-space:pre-line}
 .si-stripe{width:4px;flex-shrink:0}
@@ -1910,6 +1925,10 @@ const S = {
   personalWeights:{keyCompat:1,genreMatch:1,energyJump:1,roleRegress:1},
   narrativeCache:null,   // {setHash, text} — cached AI narrative
   setLocked:false,        // if true, Auto-Suggest + Clear are disabled
+  cosine:{               // cosine.club discovery
+    panel:null,          // null | {trackId, state, results, error}
+    gapPanel:null,       // null | {gapKey, state, results}
+  },
   listen:{trackId:null,state:"idle",result:null,trackTitle:""},
 };
 const PAGE=30;
@@ -2392,6 +2411,87 @@ function updateListenBar(){
 }
 
 // ═══════════════════════════════════════════════════════
+//  COSINE.CLUB DISCOVERY
+// ═══════════════════════════════════════════════════════
+async function cosineSearch(q){
+  const r=await fetch('/api/cosine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'search',q,limit:5})});
+  return r.json();
+}
+async function cosineSimilar(id, opts={}){
+  const r=await fetch('/api/cosine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'similar',id,limit:10,...opts})});
+  return r.json();
+}
+
+async function openSoundsLike(trackId){
+  // Toggle off
+  if(S.cosine.panel&&S.cosine.panel.trackId===trackId){S.cosine.panel=null;updateSetPanel();return;}
+  const track=allTracks().find(t=>t.id===trackId)||S.djSet.find(t=>t.id===trackId);
+  if(!track) return;
+  S.cosine.panel={trackId,state:'loading',results:[],error:null};
+  updateSetPanel();
+  try{
+    const q=[(track.trackArtist||track.releaseArtist),track.title].filter(Boolean).join(' - ');
+    const searchRes=await cosineSearch(q);
+    if(!searchRes.data||!searchRes.data.length){
+      S.cosine.panel={...S.cosine.panel,state:'done',results:[],error:'Track not found in cosine.club database'};
+      updateSetPanel(); return;
+    }
+    const match=searchRes.data[0];
+    const simRes=await cosineSimilar(match.id);
+    const results=(simRes.data?.similar_tracks||[]).map(t=>({
+      id:t.id, name:t.name, artist:t.artist, track:t.track,
+      score:Math.round((t.score||0)*100),
+      discogsUrl:t.external_link, youtubeUrl:t.video_uri,
+    }));
+    S.cosine.panel={trackId,state:'done',results,error:null,matchName:match.name};
+  } catch(e){
+    S.cosine.panel={...S.cosine.panel,state:'done',results:[],error:'API error: '+e.message};
+  }
+  updateSetPanel();
+}
+
+function renderCosineSLPanel(track){
+  const p=S.cosine.panel;
+  if(!p||p.trackId!==track.id) return '';
+  let inner='';
+  if(p.state==='loading'){
+    inner='<div style="color:var(--muted);font-size:0.52rem;padding:0.3rem 0">Searching cosine.club…</div>';
+  } else if(p.error){
+    inner='<div style="color:var(--red);font-size:0.5rem;padding:0.2rem 0">'+esc(p.error)+'</div>';
+  } else if(!p.results.length){
+    inner='<div style="color:var(--muted);font-size:0.5rem;padding:0.2rem 0">No similar tracks found.</div>';
+  } else {
+    inner=p.results.map(r=>{
+      const hi=r.score>=80;
+      return '<div class="cosine-result">'        +'<span class="cosine-score'+(hi?' high':'')+'">'+r.score+'%</span>'        +'<div class="cosine-result-body">'          +'<div class="cosine-result-title">'+esc(r.track)+'</div>'          +'<div class="cosine-result-artist">'+esc(r.artist)+'</div>'          +'<div class="cosine-links">'            +(r.discogsUrl?'<a class="cosine-link" href="'+esc(r.discogsUrl)+'" target="_blank" rel="noopener">Discogs</a>':'')            +(r.youtubeUrl?'<a class="cosine-link" href="'+esc(r.youtubeUrl)+'" target="_blank" rel="noopener">▶ YouTube</a>':'')          +'</div>'        +'</div>'      +'</div>';
+    }).join('');
+  }
+  return '<div class="cosine-panel" style="margin:0 0.5rem 0.4rem">'    +'<div class="cosine-panel-title">'      +'<span>🔍 Sounds like</span>'      +'<button class="cosine-close" data-cosine-close="1">×</button>'    +'</div>'    +inner  +'</div>';
+}
+
+async function openGapSimilar(gapKey, roleLabel, sourceTrackId){
+  S.cosine.gapPanel={gapKey,roleLabel,state:'loading',results:[],error:null};
+  updateAnalysisPanel();
+  try{
+    const src=allTracks().find(t=>t.id===sourceTrackId)||allTracks().find(t=>t.key===gapKey);
+    if(!src){S.cosine.gapPanel={...S.cosine.gapPanel,state:'done',error:'No source track found'};updateAnalysisPanel();return;}
+    const q=[(src.trackArtist||src.releaseArtist),src.title].filter(Boolean).join(' - ');
+    const searchRes=await cosineSearch(q);
+    if(!searchRes.data?.length){S.cosine.gapPanel={...S.cosine.gapPanel,state:'done',error:'Source track not in cosine.club'};updateAnalysisPanel();return;}
+    const simRes=await cosineSimilar(searchRes.data[0].id,{min_have:5});
+    const results=(simRes.data?.similar_tracks||[]).map(t=>({
+      id:t.id,name:t.name,artist:t.artist,track:t.track,
+      score:Math.round((t.score||0)*100),
+      discogsUrl:t.external_link,youtubeUrl:t.video_uri,
+    }));
+    S.cosine.gapPanel={...S.cosine.gapPanel,state:'done',results,error:null,sourceName:src.title};
+  } catch(e){
+    S.cosine.gapPanel={...S.cosine.gapPanel,state:'done',error:e.message};
+  }
+  updateAnalysisPanel();
+}
+
+// ═══════════════════════════════════════════════════════
 //  THE BRIDGE — find harmonic bridge tracks between two set positions
 // ═══════════════════════════════════════════════════════
 function findBridgeTracks(a, b){
@@ -2512,9 +2612,13 @@ function updateSetPanel(){invalidateNarrative();
       +'<div class="si-actions">'
         +'<button class="mv-btn" data-mv="up" data-idx="'+i+'" '+(i===0?"disabled":"")+'>▲</button>'
         +'<button class="mv-btn" data-mv="dn" data-idx="'+i+'" '+(i===n-1?"disabled":"")+'>▼</button>'
-        +'<button class="rmb" data-tid="'+esc(t.id)+'" title="Remove">✕</button>'
+        +'<button class="sl-btn'+(S.cosine.panel&&S.cosine.panel.trackId===t.id?' active':'')+'" data-sl="'+esc(t.id)+'" title="Find similar tracks on cosine.club">🔍</button>'    +'<button class="rmb" data-tid="'+esc(t.id)+'" title="Remove">✕</button>'
       +'</div>'
     +'</div>';
+    // Cosine Sounds Like panel — inline below this card
+    if(S.cosine.panel&&S.cosine.panel.trackId===t.id){
+      html+=renderCosineSLPanel(t);
+    }
   });
   html+='</div>';
   panel.innerHTML=html;
@@ -2523,6 +2627,19 @@ function updateSetPanel(){invalidateNarrative();
 
 
 // ── Crate Gap Analysis ─────────────────────────────────────────────────
+// ── Gap similar results renderer ────────────────────────────────────────
+function renderGapSimilarResults(){
+  const p=S.cosine.gapPanel;
+  if(!p) return '';
+  if(p.state==='loading') return '<div style="color:var(--muted);font-size:0.5rem;margin-top:0.3rem">Searching cosine.club…</div>';
+  if(p.error) return '<div style="color:var(--red);font-size:0.5rem;margin-top:0.2rem">'+esc(p.error)+'</div>';
+  if(!p.results.length) return '<div style="color:var(--muted);font-size:0.5rem;margin-top:0.2rem">No results found.</div>';
+  return '<div style="margin-top:0.3rem">'+p.results.slice(0,6).map(r=>{
+    const hi=r.score>=80;
+    return '<div class="cosine-result">'      +'<span class="cosine-score'+(hi?' high':'')+'">'+r.score+'%</span>'      +'<div class="cosine-result-body">'        +'<div class="cosine-result-title">'+esc(r.track)+'</div>'        +'<div class="cosine-result-artist">'+esc(r.artist)+'</div>'        +'<div class="cosine-links">'          +(r.discogsUrl?'<a class="cosine-link" href="'+esc(r.discogsUrl)+'" target="_blank" rel="noopener">Discogs</a>':'')          +(r.youtubeUrl?'<a class="cosine-link" href="'+esc(r.youtubeUrl)+'" target="_blank" rel="noopener">▶ YouTube</a>':'')        +'</div>'      +'</div>'    +'</div>';
+  }).join('')+'</div>';
+}
+
 // ── AI Narrative (Anthropic API) ────────────────────────────────────────
 async function generateDJNotes(){
   const btn=document.getElementById('gen-notes-btn');
@@ -2753,14 +2870,20 @@ function updateAnalysisPanel(){
   const gaps=crateGapAnalysis();
   if(gaps.length){
     html+='<div class="asec"><div class="atitle">Crate Gaps</div>';
-    html+='<div style="font-size:0.48rem;color:var(--muted);margin-bottom:0.3rem;line-height:1.6">Missing or sparse zones in your collection — what to hunt for on Discogs:</div>';
-    gaps.forEach(({key,role,count,severe})=>{
+    html+='<div style="font-size:0.48rem;color:var(--muted);margin-bottom:0.3rem;line-height:1.6">Missing or sparse zones — click Find to get buy leads via cosine.club:</div>';
+    gaps.forEach(({key,role,count,severe,relevance})=>{
       const roleName={warmup:'Warm Up (<115 BPM)',midset:'Mid Set (115–130)',peak:'Peak (130+)'}[role]||role;
       const note=count===0?'missing':'only 1 track';
-      html+='<div class="sug" style="border-left:2px solid '+(severe?'var(--red)':'var(--orange)')+'">'
-        +(severe?'🔴':'🟡')+' <strong>'+esc(key)+'</strong> · '+esc(CAM[key]?.n||'')+' · '+esc(roleName)
-        +' <span style="color:var(--muted);font-size:0.48rem">('+note+')</span>'
-        +'</div>';
+      // Find a representative track in our collection near this key for cosine search
+      const srcTrack=allTracks().filter(t=>t.key&&t.bpm).find(t=>{
+        const num=parseInt(t.key); const gNum=parseInt(key);
+        return Math.abs(num-gNum)<=1||Math.abs(num-gNum)===11; // camelot neighbour
+      });
+      const gapId=key+'|'+role;
+      const isOpen=S.cosine.gapPanel&&S.cosine.gapPanel.gapKey===gapId;
+      html+='<div class="sug" style="border-left:2px solid '+(severe?'var(--red)':'var(--orange)')+';margin-bottom:0.3rem">'        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem">'          +'<span>'+(severe?'🔴':'🟡')+' <strong>'+esc(key)+'</strong> · '+esc(CAM[key]?.n||'')+' · '+esc(roleName)          +' <span style="color:var(--muted);font-size:0.46rem">('+note+')</span></span>'          +(srcTrack?'<button class="bridge-btn'+(isOpen?' open':'')+'"            data-gap-similar="'+esc(gapId)+'|'+esc(roleName)+'|'+esc(srcTrack.id)+'">'            +(isOpen?'▲ close':'Find →')+'</button>':'')        +'</div>'        // Show cosine results for this gap
+        +(isOpen?renderGapSimilarResults():'')
+      +'</div>';
     });
     html+='</div>';
   }
@@ -3308,6 +3431,13 @@ function handleGlobalClick(e){
     }
     return;
   }
+  // Cosine Sounds Like
+  const slBtn=e.target.closest('.sl-btn[data-sl]');
+  if(slBtn){openSoundsLike(slBtn.dataset.sl);return;}
+  if(e.target.closest('[data-cosine-close]')){S.cosine.panel=null;updateSetPanel();return;}
+  // Gap similar — button in analysis panel
+  const gapBtn=e.target.closest('[data-gap-similar]');
+  if(gapBtn){const[gapKey,roleLabel,srcId]=gapBtn.dataset.gapSimilar.split('|');openGapSimilar(gapKey,roleLabel,srcId);return;}
   // Lock set toggle
   if(e.target.id==='lock-btn'){S.setLocked=!S.setLocked;updateTabBtns();updateRecordList();return;}
   // ×2 bridge toggle
