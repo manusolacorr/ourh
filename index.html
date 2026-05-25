@@ -2236,7 +2236,6 @@ function renderTrackRow(t){
       +'<div class="tr-roles">'+rolesHtml+'</div>'
     +'</div>'
     +'<button class="tr-addbtn'+(isIn?' in':'')+'" data-tid="'+esc(t.id)+'">'+(isIn?'✓':'+ Set')+'</button>'
-    +'<button class="pin-btn'+(S.pivot===t.id?' pinned':'')+'" data-pin="'+esc(t.id)+'" title="Pin as emotional centre (pivot track)">📌</button>'
     +'<button class="listen-btn'+(S.listen&&S.listen.trackId===t.id?' active':'')+'" data-listen="'+esc(t.id)+'" title="Listen &amp; detect BPM / Key via microphone">🎙</button>'
   +'</div>';
 }
