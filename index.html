@@ -662,7 +662,10 @@ function roleRegressionPenalty(roleA, roleB){
 
 function transitionScore(a, b, context={}){
   if(!a||!b) return -9999;
-  const compat=camCompat(a.key,b.key);
+  // Key scoring: only award/penalise when both tracks have real key data
+  const aKeyKnown=a.keySource&&a.keySource!=='guess';
+  const bKeyKnown=b.keySource&&b.keySource!=='guess';
+  const compat=(aKeyKnown&&bKeyKnown)?camCompat(a.key,b.key):'close';
   const bridge=bpmBridge(a.bpm,b.bpm);
   // Personal weight multipliers — learned from user edit history
   const W=S.personalWeights||{keyCompat:1,genreMatch:1,energyJump:1,roleRegress:1};
@@ -847,7 +850,10 @@ function engine1BuildSet(pool, targetSize=20){
       if(!S.allowX2Bridge && bpmBridge(last.bpm,t.bpm)?.l==="×2 bridge") continue;
       const releaseLimit=S.maxOnePerRelease?1:2;
       if(set.filter(s=>s.releaseId===t.releaseId).length>=releaseLimit) continue;
-      const compat=camCompat(last.key,t.key);
+      // Tracks with guessed keys are key-neutral — don't penalise or reward them harmonically
+      const keyKnown=t.keySource&&t.keySource!=='guess';
+      const lastKeyKnown=last.keySource&&last.keySource!=='guess';
+      const compat=(keyKnown&&lastKeyKnown)?camCompat(last.key,t.key):'close'; // 'close' = neutral
       if(compat==="clash"&&pos<0.25) continue;
       if(compat==="clash"&&pos>0.80) continue;
       if(set.length<size-2){
@@ -2543,17 +2549,13 @@ ${setData.map(t=>'#'+t.pos+' '+t.artist+' – '+t.title+' | '+(t.bpm||'?')+' BPM
 Keep it under 200 words total. Be a collaborator, not a calculator.`;
 
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch('/api/narrative',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
+      body:JSON.stringify({prompt})
     });
     const data=await resp.json();
-    const text=data.content?.map(b=>b.text||'').join('').trim();
+    const text=data.text;
     if(text){
       S.narrativeCache={setHash:S.djSet.map(t=>t.id).join(','), text};
       // Render — preserve newlines
@@ -3306,6 +3308,8 @@ function handleGlobalClick(e){
     }
     return;
   }
+  // Lock set toggle
+  if(e.target.id==='lock-btn'){S.setLocked=!S.setLocked;updateTabBtns();updateRecordList();return;}
   // ×2 bridge toggle
   if(e.target.id==='x2-toggle'){S.allowX2Bridge=!S.allowX2Bridge;renderFull();return;}
   // Slot type toggle
