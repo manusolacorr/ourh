@@ -2670,11 +2670,13 @@ function updateSetPanel(){invalidateNarrative();
   S.djSet.forEach((t,i)=>{
     const prev=S.djSet[i-1];
     if(i>0){
-      const compat=camCompat(prev.key,t.key);
       const prevBpmReal=prev.bpmSource&&prev.bpmSource!=='guess';
       const tBpmReal=t.bpmSource&&t.bpmSource!=='guess';
+      const prevKeyReal=prev.keySource&&prev.keySource!=='guess';
+      const tKeyReal=t.keySource&&t.keySource!=='guess';
       const diff=(prevBpmReal&&tBpmReal)?bpmBridge(prev.bpm,t.bpm):null;
       const pd=(prevBpmReal&&tBpmReal)?pitchDrift(prev.bpm,t.bpm):null;
+      const compat=(prevKeyReal&&tKeyReal)?camCompat(prev.key,t.key):(prevKeyReal||tKeyReal)?'close':null;
       const sameSd=sameSide(t,prev);
       const bc=sameSd?"warn":(!diff?.ok||compat==="clash")?"warn":((!prevBpmReal||!tBpmReal)?"muted":"ok");
       const stageAtI=S.arcStages?S.arcStages.find(s=>i>=s.startIdx&&i<s.endIdx):null;
@@ -3722,6 +3724,8 @@ function handleGlobalClick(e){
     const cached=await dbLoad("collection_data");
     if(cached&&cached.releases&&cached.releases.length){
       S.idbSavedAt=cached.savedAt;
+      // Migrate: null out guessed keys so old fake keys don't pollute display/engine
+      cached.releases.forEach(r=>r.tracks?.forEach(t=>{if(t.keySource==='guess'&&t.key){t.key=null;}}));
       S.releases=cached.releases;
       if(!S.username) S.username=cached.username||"";
       const {genres,styles,decades}=collectMeta(cached.releases);
